@@ -25,16 +25,7 @@
             android:layout_centerHorizontal="true"
             android:layout_gravity="center"
             android:src="@drawable/abc" />
-<!--
-        <Button
-            android:id="@+id/choose"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/imageView"
-            android:layout_centerHorizontal="true"
-            android:layout_gravity="center"
-            android:text="camera" />
--->
+
 
         <Button
             android:id="@+id/upload"

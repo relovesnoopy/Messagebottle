@@ -78,19 +78,16 @@ public class CameraFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    private OnFragmentInteractionListener mListener;
-
     private static final int REQUEST_CHOOSER = 1000;
-    private final static int REQUEST_PERMISSION = 2000;
+    private static final  int REQUEST_PERMISSION = 2000;
 
-
+    private OnFragmentInteractionListener mListener;
 
     private FloatingActionButton choosebtn;
     private Button uploadbtn;
     private Uri uri;
     private ImageView iv;
     private ProgressDialog mProgressDialog;
-    private int fileid;
     private boolean uploadflg;
     private Intent intentCamera;
     private Uri cameraUri;
@@ -98,11 +95,6 @@ public class CameraFragment extends Fragment {
     private String filePath;
 
     private  ImageButton imgb2;
-
-
-    public CameraFragment() {
-        // Required empty public constructor
-    }
 
     /**
      * Use this factory method to create a new instance of
@@ -135,10 +127,10 @@ public class CameraFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_camera, container, false);
     }
+
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -217,15 +209,12 @@ public class CameraFragment extends Fragment {
 
                     // カーソルを先頭データへ
                     boolean b = c.moveToFirst();
+                    int fileid = 0;
                     while (b) {
-                        //indexにカラムを指定
-                        fileid = 0;
                         int kari = c.getInt(c.getColumnIndex("filenum"));
-
-                        if (fileid < kari) {
-                            fileid = kari;
-
-                        }
+                        //if (fileid < kari) {
+                        fileid = kari;
+                       // }
                         // 次のデータへ
                         b = c.moveToNext();
                     }
