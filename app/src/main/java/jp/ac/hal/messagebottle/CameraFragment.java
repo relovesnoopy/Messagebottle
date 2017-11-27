@@ -80,9 +80,7 @@ public class CameraFragment extends Fragment {
 
     private static final int REQUEST_CHOOSER = 1000;
     private static final  int REQUEST_PERMISSION = 2000;
-
     private OnFragmentInteractionListener mListener;
-
     private FloatingActionButton choosebtn;
     private Button uploadbtn;
     private Uri uri;
@@ -93,7 +91,6 @@ public class CameraFragment extends Fragment {
     private Uri cameraUri;
     private File  cameraFile;
     private String filePath;
-
     private  ImageButton imgb2;
 
     /**
@@ -197,7 +194,6 @@ public class CameraFragment extends Fragment {
                     acl.setPublicReadAccess(true);
                     acl.setPublicWriteAccess(true);
 
-
                     //データベース取得,データベース接続
                     DBOpenHelper dbh = new DBOpenHelper(getActivity());
                     SQLiteDatabase db = dbh.getWritableDatabase();
@@ -211,10 +207,10 @@ public class CameraFragment extends Fragment {
                     boolean b = c.moveToFirst();
                     int fileid = 0;
                     while (b) {
-                        int kari = c.getInt(c.getColumnIndex("filenum"));
+                        int f_num = c.getInt(c.getColumnIndex("filenum"));
                         //if (fileid < kari) {
-                        fileid = kari;
-                       // }
+                        fileid = f_num;
+                        // }
                         // 次のデータへ
                         b = c.moveToNext();
                     }
@@ -226,6 +222,7 @@ public class CameraFragment extends Fragment {
 
                     //NCMBデータストア書き込み
                     NCMBObject fileObj = new NCMBObject("File");
+                    //ファイル名:ユーザ名 + fileid.jpg
                     fileObj.put("file", "testUser" + fileid + ".jpg");
                     fileObj.put("file_id", fileid);
                     fileObj.saveInBackground(new DoneCallback() {
@@ -240,6 +237,7 @@ public class CameraFragment extends Fragment {
                     });
 
                     //通信実施
+                    //アップロードするファイル名
                     final NCMBFile file = new NCMBFile("testUser" + fileid + ".jpg", dataByte, acl);
                     file.saveInBackground(new DoneCallback() {
                         @Override
@@ -261,8 +259,8 @@ public class CameraFragment extends Fragment {
                                         .setPositiveButton("OK", null)
                                         .show();
                                 iv.setImageResource(R.drawable.abc);
+                                //フィルター画像不可視化
                                 imgb2.setVisibility(View.GONE);
-
                                 uploadflg = false;
                             }
                         }
@@ -286,7 +284,6 @@ public class CameraFragment extends Fragment {
         // 保存先のフォルダーを作成
         File cameraFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "IMG");
         cameraFolder.mkdirs();
-
         // 保存ファイル名
         String photoName = System.currentTimeMillis() + ".jpg";
         filePath = cameraFolder.getPath() +"/" + photoName ;
@@ -296,7 +293,6 @@ public class CameraFragment extends Fragment {
 
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraUri);
-
         return intent;
     }
 
@@ -316,9 +312,7 @@ public class CameraFragment extends Fragment {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
 
         } else {
-            Toast toast = Toast.makeText(getActivity(), "カメラ機能が無効です", Toast.LENGTH_SHORT);
-            toast.show();
-
+            Toast.makeText(getActivity(), "カメラ機能が無効です", Toast.LENGTH_SHORT).show();
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,}, REQUEST_PERMISSION);
 
         }
@@ -353,38 +347,17 @@ public class CameraFragment extends Fragment {
                 Bitmap bp = android.provider.MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
                 iv.setImageBitmap(bp);
                 bp = null;
-                GPUImage gpuImage = new GPUImage(getContext());
-                bp = ((BitmapDrawable)iv.getDrawable()).getBitmap();
-                gpuImage.setImage(bp);
-                gpuImage.setFilter(new GPUImageSepiaFilter());
-                imgb2.setImageBitmap(gpuImage.getBitmapWithFilterApplied());
-                imgb2.setVisibility(View.VISIBLE);
-               // bp.recycle();
-                //フィルター
-                /*
-                GPUImage gpuImage = new GPUImage(getContext());
-                bp = ((BitmapDrawable)iv.getDrawable()).getBitmap();
-                gpuImage.setImage(bp);
-                gpuImage.setFilter(new GPUImageSepiaFilter());
-                bp = gpuImage.getBitmapWithFilterApplied();
-                sepiaButton.setImageBitmap(null);
-                sepiaButton.setImageBitmap(bp);
-                bp = ((BitmapDrawable)iv.getDrawable()).getBitmap();
-                gpuImage.setFilter(new GPUImageEmbossFilter());
-                bp = gpuImage.getBitmapWithFilterApplied();
-                EmbossButton.setImageBitmap(null);
-                EmbossButton.setImageBitmap(bp);
-                bp = ((BitmapDrawable)iv.getDrawable()).getBitmap();
-                gpuImage.setFilter(new GPUImageDilationFilter());
-                bp = gpuImage.getBitmapWithFilterApplied();
-                DilationButton.setImageBitmap(null);
-                DilationButton.setImageBitmap(bp);
 
-                //imageButton表示
-                sepiaButton.setVisibility(View.VISIBLE);
-                EmbossButton.setVisibility(View.VISIBLE);
-                DilationButton.setVisibility(View.VISIBLE);
-*/
+                bp = ((BitmapDrawable)iv.getDrawable()).getBitmap();
+                ColorFilter colorFilter = new ColorFilter();
+                //画像選択後フィルター選択画面へ遷移
+                Intent intent = new Intent(getActivity(), ImageUploadActivity.class);
+                intent.putExtra("picture", MainFragment.changefile(bp).getAbsolutePath());
+                //Activityの移動
+                startActivity(intent);
+                //imgb2.setImageBitmap(colorFilter.Sepia_filter(bp));
+                //imgb2.setVisibility(View.VISIBLE);
+
                 //アップロード許可フラグを立てる
                 uploadflg = true;
             } catch (IOException e) {

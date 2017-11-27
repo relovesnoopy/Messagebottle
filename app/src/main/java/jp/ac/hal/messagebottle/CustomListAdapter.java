@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 
 import java.util.List;
@@ -44,7 +45,10 @@ public class CustomListAdapter extends ArrayAdapter<ImageEntity> {
 
         // サムネイル画像を設定
         ImageView thumbnail = (ImageView)view.findViewById(R.id.thumbnail);
+        TextView textView = (TextView)view.findViewById(R.id.filter_name);
         thumbnail.setImageBitmap(item.getThumbnail());
+        textView.setText(item.getTextdada());
+
 
         //コメント
         return view;

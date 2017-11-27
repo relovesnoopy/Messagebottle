@@ -7,6 +7,16 @@
 
     <!-- TODO: Update blank fragment layout -->
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/floatingActionButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:clickable="true"
+        app:backgroundTint="@android:color/holo_blue_light"
+        app:fabSize="normal"
+        app:srcCompat="@drawable/message_add" />
+
     <LinearLayout
         android:id="@+id/container"
         android:layout_width="match_parent"
@@ -19,11 +29,11 @@
 
         <ImageView
             android:id="@+id/imageView"
-            android:layout_marginTop="30dp"
             android:layout_width="240dp"
             android:layout_height="240dp"
             android:layout_centerHorizontal="true"
             android:layout_gravity="center"
+            android:layout_marginTop="30dp"
             android:src="@drawable/abc" />
 
 
@@ -38,6 +48,18 @@
             android:layout_marginTop="27dp"
             android:text="up load" />
 
+        <HorizontalScrollView
+            android:id="@+id/horizontalscroll"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <ListView
+                android:id="@+id/list_id"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:drawSelectorOnTop="false" />
+        </HorizontalScrollView>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -54,15 +76,5 @@
 
 
     </LinearLayout>
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/floatingActionButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:clickable="true"
-        app:backgroundTint="@android:color/holo_blue_light"
-        app:fabSize="normal"
-        app:srcCompat="@drawable/message_add" />
 
 </FrameLayout>

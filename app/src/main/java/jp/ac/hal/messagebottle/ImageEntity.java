@@ -21,6 +21,17 @@ import static android.R.attr.bitmap;
 public class ImageEntity implements Serializable {
     private byte[] bytes = null;
     private String ncmbImage;
+    private String textdata;
+
+
+    public String getTextdada() {
+        return textdata;
+    }
+
+    public void setTextdada(String textdata) {
+        this.textdata = textdata;
+    }
+
 
     public String getNcmbImage() {
         return ncmbImage;

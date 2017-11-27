@@ -16,8 +16,8 @@ import android.widget.Toast;
 public class toImageActivity extends AppCompatActivity {
 
     private Bitmap bitmapimage = null;
-    private int view_width;
-    private int view_height;
+    public static int view_width;
+    public static int view_height;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,10 +42,11 @@ public class toImageActivity extends AppCompatActivity {
         Bitmap ret = null;
 
         if(strbitmap != null){
+            /*
             //画像
             BitmapFactory.Options option = new BitmapFactory.Options();
-            Bitmap src = null;
-            int sample_size = 0;
+            Bitmap src;
+            int sample_size;
 
             //実際に読み込まないで情報だけ取得しスケールを決める
             option.inJustDecodeBounds = true;
@@ -83,7 +84,9 @@ public class toImageActivity extends AppCompatActivity {
             }
             // ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             //ret.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
-            iv.setImageBitmap(ret);
+            */
+            iv.setImageBitmap(scaleBitmap(strbitmap, view_height, view_width));
+
         }else {
             Toast.makeText(this,"画像の取得に失敗しました",Toast.LENGTH_SHORT).show();
             finish();
@@ -96,6 +99,50 @@ public class toImageActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    public static Bitmap scaleBitmap(String strbitmap, int view_height, int view_width){
+        Bitmap ret = null;
+        //画像
+        BitmapFactory.Options option = new BitmapFactory.Options();
+        Bitmap src;
+        int sample_size;
+
+        //実際に読み込まないで情報だけ取得しスケールを決める
+        option.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(strbitmap, option);
+
+        if((option.outWidth * option.outHeight) > 1048576){
+            //１Mピクセル超えてる
+            double out_area = (double)(option.outWidth * option.outHeight) / 1048576.0;
+            sample_size = (int) (Math.sqrt(out_area) + 1);
+            Log.d("debug" ,"1MOver");
+        }else{
+            //小さいのでそのまま
+            sample_size = 1;
+        }
+
+        //実際に読み込むモード
+        option.inJustDecodeBounds = false;
+        //スケーリングする係数
+        option.inSampleSize = sample_size;
+        //画像を読み込む
+        src = BitmapFactory.decodeFile(strbitmap,option);
+
+        if(src == null){
+        }else{
+            int src_width = src.getWidth();
+            int src_height = src.getHeight();
+            //表示利用域に合わせたサイズを計算
+            float scale = getFitScale(view_width, view_height, src_width, src_height);
+            //リサイズマトリクス
+            Matrix matrix = new Matrix();
+            matrix.postScale(scale, scale);
+
+            //ビットマップ作成
+            ret = Bitmap.createBitmap(src, 0, 0, src_width, src_height, matrix, true);
+        }
+        return ret;
     }
 
 

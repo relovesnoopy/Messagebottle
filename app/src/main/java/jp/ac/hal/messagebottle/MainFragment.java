@@ -8,7 +8,6 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
@@ -19,27 +18,18 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.Toast;
-
 import com.nifty.cloud.mb.core.NCMB;
 import com.nifty.cloud.mb.core.NCMBException;
 import com.nifty.cloud.mb.core.NCMBObject;
 import com.nifty.cloud.mb.core.NCMBObjectService;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
-
-import static android.R.attr.src;
-import static jp.ac.hal.messagebottle.R.id.imageView;
-
 
 /**
  * A simple {@link Fragment} subclass.
@@ -63,13 +53,12 @@ public class MainFragment extends Fragment implements
     private GridView gridView;
     private static final String TAG = "MainActivity";
     private ProgressDialog mProgressDialog;
-
     private OnFragmentInteractionListener mListener;
-
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private Context context;
-
     private View rootView;
+    //画像のurl
+    private static final String imageurl = "https://mb.api.cloud.nifty.com/2013-09-01/applications/Tn5D08kBenUjNx1R/publicFiles/";
 
     public MainFragment() {
         // Required empty public constructor
@@ -113,14 +102,11 @@ public class MainFragment extends Fragment implements
         //listView = (ListView)rootView.findViewById(R.id.List);
         gridView = (GridView)rootView.findViewById(R.id.gridView);
         return rootView;
-
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        //listView = (ListView)view.findViewById(R.id.List);
         //リスト生成
         taskExe();
         //リストから画像を選択
@@ -134,28 +120,43 @@ public class MainFragment extends Fragment implements
 
                 //一時保存
                 Bitmap bp = imageEntity.getThumbnail();
-                //一時保存ファイル名
+/*                //一時保存ファイル名
                 String imageName =  "onetime.jpg";
                 File imageFile = new File(MainActivity.getContext().getFilesDir(),imageName);
                 FileOutputStream out;
                 try {
                     out = new FileOutputStream(imageFile);
                     bp.compress(Bitmap.CompressFormat.JPEG, 100, out);
-
-                    ///画像をアプリの内部領域に保存
+                    //画像をアプリの内部領域に保存
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
+*/
 
                 //Intentクラスのインスタンス化
-                Intent intent = new Intent(getActivity(),toImageActivity.class);
+                Intent intent = new Intent(getActivity(), toImageActivity.class);
                 //転送情報をセット
-                intent.putExtra("image", imageFile.getAbsolutePath());
+                intent.putExtra("image", changefile(bp).getAbsolutePath());
                 //Activityの移動
                 startActivity(intent);
             }
         });
 
+    }
+    //画像を一時ファイルに保存
+    public static File changefile(Bitmap bp){
+        //一時保存ファイル名
+        String imageName =  "onetime.jpg";
+        File imageFile = new File(MainActivity.getContext().getFilesDir(),imageName);
+        FileOutputStream out;
+        try {
+            out = new FileOutputStream(imageFile);
+            bp.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            //画像をアプリの内部領域に保存
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return imageFile;
     }
 
     /**
@@ -178,23 +179,21 @@ public class MainFragment extends Fragment implements
         mProgressDialog.setMessage("画像取得...");
         mProgressDialog.setCancelable(true);
         mProgressDialog.show();
-        //画像のurl
-        final String imageurl = "https://mb.api.cloud.nifty.com/2013-09-01/applications/Tn5D08kBenUjNx1R/publicFiles/";
+
         AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>(){
-            Bitmap bmap;
-            String bmppass;
-            ArrayList<ImageEntity> listItems = new ArrayList<>();
-            ArrayList<FileEntity> filelist = loadfileentity();
+            List<ImageEntity> listItems = new ArrayList<>();
+            List<FileEntity> filelist = loadfileentity();
             @Override
             protected Void doInBackground(Void... params) {
                 //画像取得
                 //リストに追加
-                for(FileEntity fe:filelist){
+                for(FileEntity fe : filelist){
                     ImageEntity item = new ImageEntity();
                     item.setThumbnail(downloadImage(imageurl + fe.getFile()));
                     item.setNcmbImage(imageurl + fe.getFile());
                     listItems.add(item);
                 }
+
                 return null;
             }
 
@@ -211,9 +210,9 @@ public class MainFragment extends Fragment implements
     }
 
     //ファイル名取得
-    public ArrayList<FileEntity> loadfileentity() {
+    public List<FileEntity> loadfileentity() {
         NCMBObjectService service = (NCMBObjectService)NCMB.factory(NCMB.ServiceType.OBJECT);
-        List<NCMBObject> list = null;
+        List<NCMBObject> list;
         try {
             list = service.searchObject("File", null);
         } catch (NCMBException e) {
@@ -222,7 +221,7 @@ public class MainFragment extends Fragment implements
             return null;
         }
 
-        ArrayList<FileEntity> filelist = new ArrayList<FileEntity>();
+        List<FileEntity> filelist = new ArrayList<>();
         for (NCMBObject obj : list) {
             FileEntity fe = new FileEntity();
             fe.setFile(obj.getString("file"));
@@ -236,31 +235,23 @@ public class MainFragment extends Fragment implements
 
     private Bitmap downloadImage(String address) {
         Bitmap bmp = null;
-
         try {
             URL url = new URL( address );
-
             // HttpURLConnection インスタンス生成
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-
             // タイムアウト設定
             urlConnection.setReadTimeout(10000);
             urlConnection.setConnectTimeout(20000);
-
             // リクエストメソッド
             urlConnection.setRequestMethod("GET");
-
             // リダイレクトを自動で許可しない設定
             urlConnection.setInstanceFollowRedirects(false);
-
             // ヘッダーの設定(複数設定可能)
             urlConnection.setRequestProperty("Accept-Language", "jp");
-
             // 接続
             urlConnection.connect();
 
             int resp = urlConnection.getResponseCode();
-
             switch (resp){
                 case HttpURLConnection.HTTP_OK:
                     InputStream is = urlConnection.getInputStream();

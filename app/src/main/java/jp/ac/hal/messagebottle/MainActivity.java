@@ -33,6 +33,9 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements MainFragment.OnFragmentInteractionListener ,ViewPager.OnPageChangeListener{
@@ -63,7 +66,6 @@ public class MainActivity extends AppCompatActivity implements MainFragment.OnFr
             tabs.addTab(tabs.newTab());
             // ViewPager
             ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
-
             // 各コンテンツとなるフラグメントをセットするアダプターをViewPagerにセット
             // Fragmentを操作するためにコンストラクタの引数にFragmentManagerを渡しスーパークラスにセット。
             MyFragmentPagerAdapter pagerAdapter = new MyFragmentPagerAdapter(getSupportFragmentManager());
@@ -95,6 +97,7 @@ public class MainActivity extends AppCompatActivity implements MainFragment.OnFr
             });
         }
     }
+
 
 
 
