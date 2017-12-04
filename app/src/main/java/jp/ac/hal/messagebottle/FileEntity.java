@@ -9,7 +9,7 @@ import java.util.Date;
 public class FileEntity {
     private String Object_id;
     private String file;
-    private String file_tag;
+    private String file_genre;
     private Date TimeStamp;
 
     public String getObject_id() {
@@ -28,12 +28,12 @@ public class FileEntity {
         this.file = file;
     }
 
-    public String getFile_tag() {
-        return file_tag;
+    public String getFile_genre() {
+        return file_genre;
     }
 
-    public void setFile_tag(String file_tag) {
-        this.file_tag = file_tag;
+    public void setFile_genre(String file_genre) {
+        this.file_genre = file_genre;
     }
 
     public Date getTimeStamp() {

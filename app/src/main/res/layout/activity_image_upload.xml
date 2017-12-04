@@ -4,18 +4,30 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     tools:context="jp.ac.hal.messagebottle.ImageUploadActivity">
-    <HorizontalScrollView
-        android:id="@+id/horizontalscroll"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
 
-        <ListView
-            android:id="@+id/list_id"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:drawSelectorOnTop="false" />
-    </HorizontalScrollView>
+    <TextView
+        android:id="@+id/nextPage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="right"
+        android:clickable="true"
+        android:text="@string/next" />
+
+    <ImageView
+        android:id="@+id/select_image"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/abc" />
+
+    <Spinner
+        android:id="@+id/spinner"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content" />
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 </LinearLayout>

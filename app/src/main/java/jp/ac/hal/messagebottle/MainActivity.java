@@ -39,10 +39,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements MainFragment.OnFragmentInteractionListener ,ViewPager.OnPageChangeListener{
-    public static String user_name;
+    public static String user_name = "testUser";
     public static boolean loginflg;
-    public boolean networkflg ;
-    //private final MainActivity self = this;
+    private boolean networkflg ;
 
     private static Context sContext;
 

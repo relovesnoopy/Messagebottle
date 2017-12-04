@@ -34,6 +34,7 @@ public class DBOpenHelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put("filenum",0);
         db.insert("filenum",null,values);
+        values.clear();
     }
 
     @Override

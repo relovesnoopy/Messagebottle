@@ -47,7 +47,7 @@ public class CustomListAdapter extends ArrayAdapter<ImageEntity> {
         ImageView thumbnail = (ImageView)view.findViewById(R.id.thumbnail);
         TextView textView = (TextView)view.findViewById(R.id.filter_name);
         thumbnail.setImageBitmap(item.getThumbnail());
-        textView.setText(item.getTextdada());
+        textView.setText(item.getTextdata());
 
 
         //コメント

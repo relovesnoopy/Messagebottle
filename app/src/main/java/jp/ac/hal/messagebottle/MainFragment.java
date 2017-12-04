@@ -22,6 +22,8 @@ import com.nifty.cloud.mb.core.NCMB;
 import com.nifty.cloud.mb.core.NCMBException;
 import com.nifty.cloud.mb.core.NCMBObject;
 import com.nifty.cloud.mb.core.NCMBObjectService;
+import com.nifty.cloud.mb.core.NCMBRelation;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -49,7 +51,7 @@ public class MainFragment extends Fragment implements
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
-    private ListView listView;
+
     private GridView gridView;
     private static final String TAG = "MainActivity";
     private ProgressDialog mProgressDialog;
@@ -113,25 +115,11 @@ public class MainFragment extends Fragment implements
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                //ListView lv = (ListView)parent;
                 GridView gv = (GridView)parent;
-                ImageEntity imageEntity = new ImageEntity();
-                imageEntity = (ImageEntity)gv.getItemAtPosition(position);
+                ImageEntity imageEntity = (ImageEntity)gv.getItemAtPosition(position);
 
                 //一時保存
                 Bitmap bp = imageEntity.getThumbnail();
-/*                //一時保存ファイル名
-                String imageName =  "onetime.jpg";
-                File imageFile = new File(MainActivity.getContext().getFilesDir(),imageName);
-                FileOutputStream out;
-                try {
-                    out = new FileOutputStream(imageFile);
-                    bp.compress(Bitmap.CompressFormat.JPEG, 100, out);
-                    //画像をアプリの内部領域に保存
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
-*/
 
                 //Intentクラスのインスタンス化
                 Intent intent = new Intent(getActivity(), toImageActivity.class);
@@ -174,6 +162,7 @@ public class MainFragment extends Fragment implements
 
     private void taskExe() {
         //アップロード進捗状況表示
+
         mProgressDialog = new ProgressDialog(getActivity());
         mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         mProgressDialog.setMessage("画像取得...");
@@ -193,14 +182,11 @@ public class MainFragment extends Fragment implements
                     item.setNcmbImage(imageurl + fe.getFile());
                     listItems.add(item);
                 }
-
                 return null;
             }
 
             @Override
             protected void onPostExecute(Void result){
-               // CustomListAdapter adapter = new CustomListAdapter(getActivity(), R.layout.customlist,listItems);
-                //listView.setAdapter(adapter);
                 CustomGridAdapter gridAdapter = new CustomGridAdapter(getActivity(), listItems);
                 gridView.setAdapter(gridAdapter);
                 mProgressDialog.dismiss();
@@ -209,8 +195,9 @@ public class MainFragment extends Fragment implements
         task.execute();
     }
 
-    //ファイル名取得
+    //ファイル名取得(検索条件なし)
     public List<FileEntity> loadfileentity() {
+        //すべてのデータ取得の場合NCMBObjectServiceを用いる
         NCMBObjectService service = (NCMBObjectService)NCMB.factory(NCMB.ServiceType.OBJECT);
         List<NCMBObject> list;
         try {
@@ -220,18 +207,17 @@ public class MainFragment extends Fragment implements
             Toast.makeText(getActivity(), "Failed loading messages", Toast.LENGTH_LONG).show();
             return null;
         }
-
         List<FileEntity> filelist = new ArrayList<>();
         for (NCMBObject obj : list) {
             FileEntity fe = new FileEntity();
             fe.setFile(obj.getString("file"));
             fe.setObject_id(obj.getString("objectId"));
-            fe.setFile_tag(obj.getString("file_id"));
-            //fe.getTimeStamp(obj.getUpdateDate());
+            fe.setFile_genre(obj.getString("file_id"));
             filelist.add(fe);
         }
         return filelist;
     }
+
 
     private Bitmap downloadImage(String address) {
         Bitmap bmp = null;

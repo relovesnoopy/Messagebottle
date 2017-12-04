@@ -58,6 +58,7 @@ import jp.co.cyberagent.android.gpuimage.GPUImageToonFilter;
 
 import static android.app.Activity.RESULT_OK;
 import static jp.ac.hal.messagebottle.MainActivity.getContext;
+import static jp.ac.hal.messagebottle.MainActivity.user_name;
 
 
 /**
@@ -91,7 +92,6 @@ public class CameraFragment extends Fragment {
     private Uri cameraUri;
     private File  cameraFile;
     private String filePath;
-    private  ImageButton imgb2;
 
     /**
      * Use this factory method to create a new instance of
@@ -136,7 +136,6 @@ public class CameraFragment extends Fragment {
         choosebtn= (FloatingActionButton)view.findViewById(R.id.floatingActionButton);
         //表示用ImageViewインスタンス化
         iv = (ImageView)view.findViewById(R.id.imageView);
-        imgb2 = (ImageButton)view.findViewById(R.id.imageButton2);
 
         choosebtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -202,7 +201,6 @@ public class CameraFragment extends Fragment {
 
                     // SQLの実行
                     Cursor c = db.query("userfile", col, null, null, null, null, null);
-
                     // カーソルを先頭データへ
                     boolean b = c.moveToFirst();
                     int fileid = 0;
@@ -223,8 +221,9 @@ public class CameraFragment extends Fragment {
                     //NCMBデータストア書き込み
                     NCMBObject fileObj = new NCMBObject("File");
                     //ファイル名:ユーザ名 + fileid.jpg
-                    fileObj.put("file", "testUser" + fileid + ".jpg");
+                    fileObj.put("file", user_name + fileid + ".jpg");
                     fileObj.put("file_id", fileid);
+                    fileObj.put("genre_id", 1);
                     fileObj.saveInBackground(new DoneCallback() {
                         @Override
                         public void done(NCMBException e) {
@@ -237,8 +236,8 @@ public class CameraFragment extends Fragment {
                     });
 
                     //通信実施
-                    //アップロードするファイル名
-                    final NCMBFile file = new NCMBFile("testUser" + fileid + ".jpg", dataByte, acl);
+                    //アップロード処理
+                    final NCMBFile file = new NCMBFile(user_name + fileid + ".jpg", dataByte, acl);
                     file.saveInBackground(new DoneCallback() {
                         @Override
                         public void done(NCMBException e) {
@@ -259,8 +258,6 @@ public class CameraFragment extends Fragment {
                                         .setPositiveButton("OK", null)
                                         .show();
                                 iv.setImageResource(R.drawable.abc);
-                                //フィルター画像不可視化
-                                imgb2.setVisibility(View.GONE);
                                 uploadflg = false;
                             }
                         }
@@ -269,15 +266,6 @@ public class CameraFragment extends Fragment {
 
             }
         });
-        imgb2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Bitmap bp = ((BitmapDrawable)imgb2.getDrawable()).getBitmap();
-                iv.setImageBitmap(bp);
-            }
-        });
-
-
     }
 
     private Intent cameraIntent(){

@@ -24,11 +24,11 @@ public class ImageEntity implements Serializable {
     private String textdata;
 
 
-    public String getTextdada() {
+    public String getTextdata() {
         return textdata;
     }
 
-    public void setTextdada(String textdata) {
+    public void setTextdata(String textdata) {
         this.textdata = textdata;
     }
 
@@ -41,8 +41,6 @@ public class ImageEntity implements Serializable {
         this.ncmbImage = ncmbImage;
     }
 
-
-   // private Bitmap bp;
 
     public void setThumbnail(Bitmap thumbnail) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -57,10 +55,6 @@ public class ImageEntity implements Serializable {
             bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
         }
         return bmp;
-    }
-
-    public byte[] getbyte(){
-        return this.bytes;
     }
 
 
