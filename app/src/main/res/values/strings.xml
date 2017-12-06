@@ -3,6 +3,7 @@
     <string name="title">messagebottle</string>
     <string name="regist">新規登録</string>
     <string name="next">次へ</string>
+    <string name="genre">ジャンル</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

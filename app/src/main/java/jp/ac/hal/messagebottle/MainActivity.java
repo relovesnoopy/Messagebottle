@@ -27,6 +27,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -48,7 +49,10 @@ public class MainActivity extends AppCompatActivity implements MainFragment.OnFr
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // タイトルバーを消す
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         sContext = this;
+
         //APIキーの設定とSDKの初期化
         NCMB.initialize(this.getApplicationContext(), "65515bc5e2bc943adba7f1d767cb0d4b6dbf823db2cab262b5d90a4cdd551346", "a46f230a9661a8d0c24dca36d2aaf6ea47fb97f30c72fb316095207baca4e05b");
 
@@ -58,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements MainFragment.OnFr
             networkflg = false;
         }
         if(networkflg) {
+
             setContentView(R.layout.activity_main);
             TabLayout tabs = (TabLayout) findViewById(R.id.tabs);
             tabs.addTab(tabs.newTab());
