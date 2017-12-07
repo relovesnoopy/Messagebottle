@@ -21,7 +21,7 @@
     <ImageView
         android:id="@+id/thumbnail"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="140dp"
         android:layout_weight="0.02"
         android:padding="3dp" />
 

@@ -81,6 +81,7 @@ public class CameraFragment extends Fragment {
 
     private static final int REQUEST_CHOOSER = 1000;
     private static final  int REQUEST_PERMISSION = 2000;
+    private static final  int RESULT_IMAGE = 3000;
     private OnFragmentInteractionListener mListener;
     private FloatingActionButton choosebtn;
     private Button uploadbtn;
@@ -162,7 +163,7 @@ public class CameraFragment extends Fragment {
 
                 //ChooserにGallaryのIntentとCameraのIntentを登録
                 Intent intent = Intent.createChooser(intentGallery, "画像の選択");
-                if(intentCamera!=null){
+                if(intentCamera != null){
                     intent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {intentCamera});
                 }
                 startActivityForResult(intent, REQUEST_CHOOSER);
@@ -309,50 +310,49 @@ public class CameraFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         // TODO Auto-generated method stub
-        super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == REQUEST_CHOOSER) {
+        switch (requestCode){
+            case REQUEST_CHOOSER:
+                //dataがnullの場合はギャラリーではなくカメラからの取得と判定しカメラのUriを使う
+                uri = (data != null ? data.getData() : cameraUri);
 
-            if(resultCode != RESULT_OK) {
-                // キャンセル時
-                return ;
-            }
+                if(uri == null) {
+                    // 取得失敗
+                    Toast.makeText(getActivity(), "Error.retry.", Toast.LENGTH_LONG).show();
+                    return;
 
-            //dataがnullの場合はギャラリーではなくカメラからの取得と判定しカメラのUriを使う
-            uri = (data != null ? data.getData() : cameraUri);
+                }
+                // ギャラリーへ画像追加
+                //MediaScannerConnection.scanFile(getActivity(), new String[]{uri.getPath()}, new String[]{"image/jpeg"}, null);
+                // 画像を選択
+                try {
+                    Bitmap bp = android.provider.MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
+                    //iv.setImageBitmap(bp);
+                    //bp = ((BitmapDrawable)iv.getDrawable()).getBitmap();
+                    //画像選択後フィルター選択画面へ遷移
+                    Intent intent = new Intent(getActivity(), ImageUploadActivity.class);
+                    intent.putExtra("picture", MainFragment.changefile(bp).getAbsolutePath());
+                    //Activityの移動
+                    startActivityForResult(intent, RESULT_IMAGE);
+                    //アップロード許可フラグを立てる
+                    uploadflg = true;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case RESULT_IMAGE :
+                if(resultCode == RESULT_OK) {
+                    Log.d("log","Ok_image");
+                    //Intentの受け取り
+                    String strbitmap = (String) data.getSerializableExtra("image");
+                    String strgenre = (String) data.getSerializableExtra("genre");
 
-            if(uri == null) {
-                // 取得失敗
-                Toast.makeText(getActivity(), "Error.retry.", Toast.LENGTH_LONG).show();
-                return;
-
-            }
-
-            // ギャラリーへ画像追加
-            //MediaScannerConnection.scanFile(getActivity(), new String[]{uri.getPath()}, new String[]{"image/jpeg"}, null);
-
-            // 画像を設定
-            try {
-                Bitmap bp = android.provider.MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
-                iv.setImageBitmap(bp);
-                bp = null;
-
-                bp = ((BitmapDrawable)iv.getDrawable()).getBitmap();
-                ColorFilter colorFilter = new ColorFilter();
-                //画像選択後フィルター選択画面へ遷移
-                Intent intent = new Intent(getActivity(), ImageUploadActivity.class);
-                intent.putExtra("picture", MainFragment.changefile(bp).getAbsolutePath());
-                //Activityの移動
-                startActivity(intent);
-                //imgb2.setImageBitmap(colorFilter.Sepia_filter(bp));
-                //imgb2.setVisibility(View.VISIBLE);
-
-                //アップロード許可フラグを立てる
-                uploadflg = true;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+                    Bitmap bitmap = new ImageManage().scaleBitmap(strbitmap);
+                    iv.setImageBitmap(bitmap);
+                }
+                break;
         }
+        super.onActivityResult(requestCode, resultCode, data);
+
 
     }
 

@@ -14,6 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
@@ -26,8 +27,10 @@ import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -42,6 +45,9 @@ import java.io.IOException;
 public class MainActivity extends AppCompatActivity implements MainFragment.OnFragmentInteractionListener ,ViewPager.OnPageChangeListener{
     public static String user_name = "testUser";
     public static boolean loginflg;
+    //画面サイズ
+    public static int view_width;
+    public static int view_height;
     private boolean networkflg ;
 
     private static Context sContext;
@@ -50,8 +56,17 @@ public class MainActivity extends AppCompatActivity implements MainFragment.OnFr
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // タイトルバーを消す
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        //requestWindowFeature(Window.FEATURE_NO_TITLE);
         sContext = this;
+
+        //端末のサイズ取得
+        WindowManager wm = (WindowManager)getSystemService(WINDOW_SERVICE);
+        Display disp = wm.getDefaultDisplay();
+        Point size = new Point();
+        disp.getSize(size);
+        //サイズ設定
+        view_width = size.x;
+        view_height = size.y;
 
         //APIキーの設定とSDKの初期化
         NCMB.initialize(this.getApplicationContext(), "65515bc5e2bc943adba7f1d767cb0d4b6dbf823db2cab262b5d90a4cdd551346", "a46f230a9661a8d0c24dca36d2aaf6ea47fb97f30c72fb316095207baca4e05b");

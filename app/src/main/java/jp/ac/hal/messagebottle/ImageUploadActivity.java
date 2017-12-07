@@ -1,7 +1,10 @@
 package jp.ac.hal.messagebottle;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -10,6 +13,7 @@ import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -22,32 +26,24 @@ import java.util.List;
 
 
 public class ImageUploadActivity extends AppCompatActivity {
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_upload);
 
-        //端末のサイズ取得
-        WindowManager wm = (WindowManager)getSystemService(WINDOW_SERVICE);
-        Display disp = wm.getDefaultDisplay();
-
-        Point size = new Point();
-        disp.getSize(size);
-
-        toImageActivity.view_width = size.x;
-        toImageActivity.view_height = size.y;
-
         //Intentの受け取り
         String strbitmap = (String)getIntent().getSerializableExtra("picture");
         if(strbitmap != null){
-            Bitmap bp = toImageActivity.scaleBitmap(strbitmap, toImageActivity.view_height, toImageActivity.view_width);
+            //Bitmap bp = toImageActivity.scaleBitmap(strbitmap, toImageActivity.view_height, toImageActivity.view_width);
+            Bitmap bp = new ImageManage().scaleBitmap(strbitmap);
             final ImageView imageView = (ImageView)findViewById(R.id.select_image);
             imageView.setImageBitmap(bp);
             //タグ取得
             //Spinnerにセット
             ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item);
             //Spinnerのインスタンス化
-            Spinner sp = (Spinner)findViewById(R.id.spinner);
+            final Spinner sp = (Spinner)findViewById(R.id.spinner);
             arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
             NCMBObjectService objectService = (NCMBObjectService) NCMB.factory(NCMB.ServiceType.OBJECT);
@@ -65,6 +61,7 @@ public class ImageUploadActivity extends AppCompatActivity {
                 return;
             }
 
+            //フィルター一覧をアダプターにセット
             ColorFilter colorFilter = new ColorFilter();
             RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
             final CasarealRecycleViewAdapter adapter = new CasarealRecycleViewAdapter(colorFilter.getFilterList(bp));
@@ -79,10 +76,17 @@ public class ImageUploadActivity extends AppCompatActivity {
                     imageView.setImageBitmap(position.getThumbnail());
                 }
             });
-            TextView textView = (TextView)findViewById(R.id.nextPage);
-            textView.setOnClickListener(new View.OnClickListener() {
+            Button btn = (Button) findViewById(R.id.nextPage);
+            final Intent intent = new Intent();
+
+            btn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    //画像とジャンルをセット
+                    intent.putExtra("image", MainFragment.changefile(((BitmapDrawable)imageView.getDrawable()).getBitmap()).getAbsolutePath());
+                    intent.putExtra("genre", (String)sp.getSelectedItem());
+
+                    setResult(RESULT_OK, intent);
                     finish();
                 }
             });

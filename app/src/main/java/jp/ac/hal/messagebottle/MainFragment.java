@@ -131,6 +131,7 @@ public class MainFragment extends Fragment implements
         });
 
     }
+
     //画像を一時ファイルに保存
     public static File changefile(Bitmap bp){
         //一時保存ファイル名
