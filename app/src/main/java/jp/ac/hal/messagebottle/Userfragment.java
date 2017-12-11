@@ -1,6 +1,7 @@
 package jp.ac.hal.messagebottle;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -8,6 +9,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 
 /**
@@ -27,6 +29,12 @@ public class Userfragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    private View rootView;
+    private Context context;
+    private Button loginbtn;
+    private Button signupbtn;
+    private Button listMymess;
+    private static final int USERCODE = 500;
 
     private OnFragmentInteractionListener mListener;
 
@@ -65,12 +73,26 @@ public class Userfragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_userfragment, container, false);
+        this.rootView = inflater.inflate(R.layout.fragment_userfragment, container, false);
+        this.context = rootView.getContext();
+        loginbtn = (Button)rootView.findViewById(R.id.login);
+        signupbtn = (Button)rootView.findViewById(R.id.sinup);
+        listMymess = (Button)rootView.findViewById(R.id.send_message);
+        return rootView;
     }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        //ログイン画面遷移
+        loginbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), Login.class);
+                startActivityForResult(intent, USERCODE);
+            }
+        });
 
     }
 

@@ -16,6 +16,7 @@ public class SignupActivity extends AppCompatActivity {
     private Button signupbtn;
     private EditText nametext;
     private EditText passwordtext;
+    final ProgressDialog progressDialog = new ProgressDialog(SignupActivity.this, R.style.Theme_AppCompat_DayNight_Dialog);
 
 
     @Override
@@ -39,7 +40,7 @@ public class SignupActivity extends AppCompatActivity {
 
         signupbtn.setEnabled(false);
 
-        final ProgressDialog progressDialog = new ProgressDialog(SignupActivity.this, R.style.AppTheme);
+        //final ProgressDialog progressDialog = new ProgressDialog(SignupActivity.this, R.style.Theme_AppCompat_DayNight_Dialog);
         progressDialog.setIndeterminate(true);
         progressDialog.setMessage("アカウントを作成しています...");
         progressDialog.show();
@@ -81,6 +82,10 @@ public class SignupActivity extends AppCompatActivity {
     public void onSignupSuccess() {
         signupbtn.setEnabled(true);
         setResult(RESULT_OK, null);
+
+        progressDialog.setIndeterminate(true);
+        progressDialog.setMessage("アカウントを作成しました。");
+        progressDialog.show();
         //Login画面へ戻る
         finish();
     }

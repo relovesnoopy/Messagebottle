@@ -2,6 +2,8 @@
     <string name="app_name">MessageBottle</string>
     <string name="title">messagebottle</string>
     <string name="regist">新規登録</string>
+    <string name="login">ログイン</string>
+    <string name="sendmess">送信メッセージ一覧</string>
     <string name="next">次へ</string>
     <string name="genre">ジャンル</string>
 

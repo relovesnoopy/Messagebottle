@@ -12,7 +12,9 @@ import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.ExifInterface;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -93,6 +95,7 @@ public class CameraFragment extends Fragment {
     private Uri cameraUri;
     private File  cameraFile;
     private String filePath;
+    private int genreid;
 
     /**
      * Use this factory method to create a new instance of
@@ -224,7 +227,7 @@ public class CameraFragment extends Fragment {
                     //ファイル名:ユーザ名 + fileid.jpg
                     fileObj.put("file", user_name + fileid + ".jpg");
                     fileObj.put("file_id", fileid);
-                    fileObj.put("genre_id", 1);
+                    fileObj.put("genre_id", genreid);
                     fileObj.saveInBackground(new DoneCallback() {
                         @Override
                         public void done(NCMBException e) {
@@ -258,8 +261,11 @@ public class CameraFragment extends Fragment {
                                         .setMessage("アップロード完了")
                                         .setPositiveButton("OK", null)
                                         .show();
-                                iv.setImageResource(R.drawable.abc);
+                                //初期化
                                 uploadflg = false;
+                                genreid = 0;
+                                iv.setImageResource(R.drawable.noimage);
+
                             }
                         }
                     });
@@ -326,8 +332,40 @@ public class CameraFragment extends Fragment {
                 // 画像を選択
                 try {
                     Bitmap bp = android.provider.MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
-                    //iv.setImageBitmap(bp);
-                    //bp = ((BitmapDrawable)iv.getDrawable()).getBitmap();
+                    int width = bp.getWidth();
+                    int height = bp.getHeight();
+
+                    ExifInterface exifInterface;
+
+                    try {
+                        exifInterface = new ExifInterface(uri.getPath());
+                    } catch (IOException e) {
+                        return;
+                    }
+
+                    int exifR = getExifint(exifInterface, ExifInterface.TAG_ORIENTATION);
+                    int R = 0;
+
+                    switch(exifR){
+                        case 6:
+                            R=90;
+                            break;
+                        case 1:
+                            R=0;
+                            break;
+                        case 8:
+                            R=270;
+                            break;
+                        case 3:
+                            R=180;
+                            break;
+                    }
+
+                    Matrix matrix = new Matrix();
+                    matrix.postRotate(R);  //角度指定
+
+                    bp = Bitmap.createBitmap(bp, 0, 0, width, height, matrix, true);
+
                     //画像選択後フィルター選択画面へ遷移
                     Intent intent = new Intent(getActivity(), ImageUploadActivity.class);
                     intent.putExtra("picture", MainFragment.changefile(bp).getAbsolutePath());
@@ -344,8 +382,7 @@ public class CameraFragment extends Fragment {
                     Log.d("log","Ok_image");
                     //Intentの受け取り
                     String strbitmap = (String) data.getSerializableExtra("image");
-                    String strgenre = (String) data.getSerializableExtra("genre");
-
+                    genreid = (int)data.getSerializableExtra("genre");
                     Bitmap bitmap = new ImageManage().scaleBitmap(strbitmap);
                     iv.setImageBitmap(bitmap);
                 }
@@ -361,6 +398,9 @@ public class CameraFragment extends Fragment {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
         }
+    }
+    private int getExifint(ExifInterface ei,String tag) {
+        return  Integer.parseInt(ei.getAttribute(tag));
     }
 
 

@@ -91,7 +91,10 @@ public class MainFragment extends Fragment implements
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+        //リスト生成
+        taskExe();
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -101,7 +104,6 @@ public class MainFragment extends Fragment implements
         this.context = rootView.getContext();
         mSwipeRefreshLayout = (SwipeRefreshLayout)rootView.findViewById(R.id.swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(this);
-        //listView = (ListView)rootView.findViewById(R.id.List);
         gridView = (GridView)rootView.findViewById(R.id.gridView);
         return rootView;
     }
@@ -110,17 +112,15 @@ public class MainFragment extends Fragment implements
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         //リスト生成
-        taskExe();
+        //taskExe();
         //リストから画像を選択
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 GridView gv = (GridView)parent;
                 ImageEntity imageEntity = (ImageEntity)gv.getItemAtPosition(position);
-
                 //一時保存
                 Bitmap bp = imageEntity.getThumbnail();
-
                 //Intentクラスのインスタンス化
                 Intent intent = new Intent(getActivity(), toImageActivity.class);
                 //転送情報をセット
@@ -218,6 +218,8 @@ public class MainFragment extends Fragment implements
         }
         return filelist;
     }
+
+
 
 
     private Bitmap downloadImage(String address) {

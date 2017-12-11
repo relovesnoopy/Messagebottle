@@ -30,11 +30,11 @@
         <ImageView
             android:id="@+id/imageView"
             android:layout_width="match_parent"
-            android:layout_height="240dp"
+            android:layout_height="300dp"
             android:layout_centerHorizontal="true"
             android:layout_gravity="center"
             android:layout_marginTop="30dp"
-            android:src="@drawable/abc" />
+            android:src="@drawable/noimage" />
 
 
         <Button

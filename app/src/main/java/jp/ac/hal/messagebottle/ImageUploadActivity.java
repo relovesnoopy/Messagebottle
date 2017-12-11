@@ -84,7 +84,9 @@ public class ImageUploadActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     //画像とジャンルをセット
                     intent.putExtra("image", MainFragment.changefile(((BitmapDrawable)imageView.getDrawable()).getBitmap()).getAbsolutePath());
-                    intent.putExtra("genre", (String)sp.getSelectedItem());
+                    //intent.putExtra("genre", (String)sp.getSelectedItem());
+                    intent.putExtra("genre", sp.getSelectedItemPosition());
+
 
                     setResult(RESULT_OK, intent);
                     finish();

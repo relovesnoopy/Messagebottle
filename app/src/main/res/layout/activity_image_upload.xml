@@ -48,9 +48,10 @@
         app:srcCompat="@drawable/abc" />
 
     <android.support.v7.widget.RecyclerView
-        android:layout_gravity="bottom"
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:layout_weight="0.02" />
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_weight="0.02"
+        android:paddingTop="20dp" />
 </LinearLayout>

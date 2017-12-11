@@ -20,7 +20,7 @@ public class Login extends AppCompatActivity {
     private EditText passwordtext;
     private TextView tv;
     private Button loginbtn;
-    private TextView signupbtn;
+    private Button signupbtn;
 
 
     @Override
@@ -34,7 +34,7 @@ public class Login extends AppCompatActivity {
                 login();
             }
         });
-        signupbtn = (TextView) findViewById(R.id.link_signup);
+        signupbtn = (Button) findViewById(R.id.link_signup);
         signupbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -106,7 +106,11 @@ public class Login extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         // Disable going back to the MainActivity
+        super.onBackPressed();
+        Toast.makeText(getBaseContext(), "back", Toast.LENGTH_LONG).show();
+        finish();
         moveTaskToBack(true);
+
     }
 
     public void onLoginSuccess() {
@@ -146,5 +150,12 @@ public class Login extends AppCompatActivity {
         }
 
         return valid;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        finish();
+
     }
 }
