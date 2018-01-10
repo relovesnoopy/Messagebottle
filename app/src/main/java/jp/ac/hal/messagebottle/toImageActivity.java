@@ -15,15 +15,14 @@ import android.widget.Toast;
 
 public class toImageActivity extends AppCompatActivity {
 
-    private Bitmap bitmapimage = null;
+    //private Bitmap bitmapimage = null;
+    private boolean isfocus;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_to_image);
-
-
 
         //Intentの受け取り
         String strbitmap = (String)getIntent().getSerializableExtra("image");
@@ -37,9 +36,11 @@ public class toImageActivity extends AppCompatActivity {
             finish();
         }
 
+
         iv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 finish();
             }
         });

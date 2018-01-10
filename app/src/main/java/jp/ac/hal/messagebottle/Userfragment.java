@@ -86,12 +86,13 @@ public class Userfragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         //ログイン画面遷移
-        loginbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        loginbtn.setOnClickListener(v -> {
                 Intent intent = new Intent(getActivity(), Login.class);
                 startActivityForResult(intent, USERCODE);
-            }
+        });
+        signupbtn.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), MainContentsActivity.class);
+            startActivity(intent);
         });
 
     }

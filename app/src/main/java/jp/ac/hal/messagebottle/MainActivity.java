@@ -1,48 +1,24 @@
 package jp.ac.hal.messagebottle;
 
-import com.nifty.cloud.mb.core.DoneCallback;
-import com.nifty.cloud.mb.core.FetchFileCallback;
-import com.nifty.cloud.mb.core.NCMB;
-import com.nifty.cloud.mb.core.NCMBAcl;
-import com.nifty.cloud.mb.core.NCMBException;
-import com.nifty.cloud.mb.core.NCMBFile;
-import android.app.Application;
 
-import android.app.AlertDialog;
-import android.app.Fragment;
+import com.nifty.cloud.mb.core.NCMB;
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.net.Uri;
-import android.os.Build;
-import android.provider.MediaStore;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Display;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.Toast;
+import android.widget.RelativeLayout;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
-public class MainActivity extends AppCompatActivity implements MainFragment.OnFragmentInteractionListener ,ViewPager.OnPageChangeListener{
+public class MainActivity extends AppCompatActivity implements MainFragment.OnFragmentInteractionListener, ViewPager.OnPageChangeListener{
     public static String user_name = "testUser";
     public static boolean loginflg;
     //画面サイズ
@@ -52,12 +28,16 @@ public class MainActivity extends AppCompatActivity implements MainFragment.OnFr
 
     private static Context sContext;
 
+    private BottomSheetBehavior behavior;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // タイトルバーを消す
         //requestWindowFeature(Window.FEATURE_NO_TITLE);
         sContext = this;
+        //file:///storage/emulated/0/Pictures/IMG/1513181867796.jpg
+
 
         //端末のサイズ取得
         WindowManager wm = (WindowManager)getSystemService(WINDOW_SERVICE);
@@ -71,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements MainFragment.OnFr
         //APIキーの設定とSDKの初期化
         NCMB.initialize(this.getApplicationContext(), "65515bc5e2bc943adba7f1d767cb0d4b6dbf823db2cab262b5d90a4cdd551346", "a46f230a9661a8d0c24dca36d2aaf6ea47fb97f30c72fb316095207baca4e05b");
 
-        if (NetworkManager.isConnected(this)) {
+        if (NetworkManager.INSTANCE.isConnected(this)) {
             networkflg = true;
         } else {
             networkflg = false;
@@ -90,8 +70,8 @@ public class MainActivity extends AppCompatActivity implements MainFragment.OnFr
             MyFragmentPagerAdapter pagerAdapter = new MyFragmentPagerAdapter(getSupportFragmentManager());
 
             // アダプターに各ページ要素となるフラグメントを追加
-            pagerAdapter.addFragment(MainFragment.newInstance("main", "メッセージ一覧"));
             pagerAdapter.addFragment(CameraFragment.newInstance("camera", "カメラ"));
+            pagerAdapter.addFragment(CameraFragment.newInstance("main", "メッセージ一覧"));
             pagerAdapter.addFragment(Userfragment.newInstance("setting", "設定"));
 
             // ViewPagerにアダプタをセット
@@ -99,7 +79,6 @@ public class MainActivity extends AppCompatActivity implements MainFragment.OnFr
 
             // TabLayoutとViewPagerをバインド
             tabs.setupWithViewPager(viewPager);
-
         }
         //netに接続されていなかったら
         else {
@@ -144,4 +123,6 @@ public class MainActivity extends AppCompatActivity implements MainFragment.OnFr
         //このアプリのコンテキストを返す
         return sContext;
     }
+
+
 }

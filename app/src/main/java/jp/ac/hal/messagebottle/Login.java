@@ -21,6 +21,7 @@ public class Login extends AppCompatActivity {
     private TextView tv;
     private Button loginbtn;
     private Button signupbtn;
+    private String user;
 
 
     @Override
@@ -63,13 +64,13 @@ public class Login extends AppCompatActivity {
         nametext = (EditText)findViewById(R.id.input_name);
         passwordtext = (EditText)findViewById(R.id.input_password);
 
-        String name = nametext.getText().toString();
+        user = nametext.getText().toString();
         String password = passwordtext.getText().toString();
 
         // TODO: Implement your own authentication logic here.
         //ユーザ名とパスワードを指定してログインを実行
         try {
-            NCMBUser.loginInBackground(name, password, new LoginCallback() {
+            NCMBUser.loginInBackground(user, password, new LoginCallback() {
                 @Override
                 public void done(NCMBUser user, NCMBException e) {
                     if (e != null) {
@@ -116,6 +117,7 @@ public class Login extends AppCompatActivity {
     public void onLoginSuccess() {
         loginbtn.setEnabled(true);
         //ログインフラグを立てる
+        MainActivity.user_name = user;
         MainActivity.loginflg = true;
         finish();
     }

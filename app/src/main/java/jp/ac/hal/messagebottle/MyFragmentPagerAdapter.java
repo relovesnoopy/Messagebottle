@@ -36,9 +36,9 @@ public class MyFragmentPagerAdapter extends FragmentStatePagerAdapter {
         //positionごとのタブ名をreturn
         switch (position){
             case 0:
-                return "main";
+                return "camera";
             case 1:
-                return "camara";
+                return "main";
             case 2:
                 return "setting";
             default:

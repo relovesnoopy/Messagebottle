@@ -3,6 +3,8 @@ package jp.ac.hal.messagebottle;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +22,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -46,19 +49,10 @@ import com.nifty.cloud.mb.core.NCMBQuery;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
-import jp.co.cyberagent.android.gpuimage.GPUImage;
-import jp.co.cyberagent.android.gpuimage.GPUImageDilationFilter;
-import jp.co.cyberagent.android.gpuimage.GPUImageEmbossFilter;
-import jp.co.cyberagent.android.gpuimage.GPUImageSepiaFilter;
-import jp.co.cyberagent.android.gpuimage.GPUImageToonFilter;
 
 import static android.app.Activity.RESULT_OK;
+import static android.content.ContentValues.TAG;
 import static jp.ac.hal.messagebottle.MainActivity.getContext;
 import static jp.ac.hal.messagebottle.MainActivity.user_name;
 
@@ -82,8 +76,9 @@ public class CameraFragment extends Fragment {
     private String mParam2;
 
     private static final int REQUEST_CHOOSER = 1000;
-    private static final  int REQUEST_PERMISSION = 2000;
-    private static final  int RESULT_IMAGE = 3000;
+    private static final int REQUEST_PERMISSION = 2000;
+    private static final int REQUEST_CODE = 2500;
+    private static final int RESULT_IMAGE = 3000;
     private OnFragmentInteractionListener mListener;
     private FloatingActionButton choosebtn;
     private Button uploadbtn;
@@ -144,6 +139,7 @@ public class CameraFragment extends Fragment {
         choosebtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                /*
                 //カメラの起動Intentの用意
                 if (Build.VERSION.SDK_INT >= 23) {
                     checkPermission();
@@ -152,6 +148,8 @@ public class CameraFragment extends Fragment {
                     //Intentを返す
                     intentCamera = cameraIntent();
                 }
+                */
+                intentCamera = cameraIntent();
 
                 // ギャラリー用のIntent作成
                 Intent intentGallery;
@@ -161,7 +159,9 @@ public class CameraFragment extends Fragment {
                 } else {
                     intentGallery = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                     intentGallery.addCategory(Intent.CATEGORY_OPENABLE);
-                    intentGallery.setType("image/*");
+                    //intentGallery = new Intent(Intent.ACTION_GET_CONTENT);
+                   // intentGallery.setType("image/*");
+                    intentGallery.setType("*/*");
                 }
 
                 //ChooserにGallaryのIntentとCameraのIntentを登録
@@ -294,7 +294,7 @@ public class CameraFragment extends Fragment {
     // 許可チェック
     private void checkPermission(){
         // 既に許可している
-        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)== PackageManager.PERMISSION_GRANTED){
+        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED ){
             cameraIntent();
         } else{
             //拒否している場合
@@ -304,11 +304,13 @@ public class CameraFragment extends Fragment {
     // 許可を求める
     private void requestLocationPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, REQUEST_PERMISSION);
+
 
         } else {
             Toast.makeText(getActivity(), "カメラ機能が無効です", Toast.LENGTH_SHORT).show();
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,}, REQUEST_PERMISSION);
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, REQUEST_PERMISSION);
+            //requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CODE);
 
         }
     }
@@ -330,34 +332,41 @@ public class CameraFragment extends Fragment {
                 // ギャラリーへ画像追加
                 //MediaScannerConnection.scanFile(getActivity(), new String[]{uri.getPath()}, new String[]{"image/jpeg"}, null);
                 // 画像を選択
+                Log.d("uri",String.valueOf(uri));
+                //FileスキームのURIに変換する
+                Uri FileUri = Uri.parse("file://"+getPathFromUri(getContext(), uri));
+                Log.d("uri",String.valueOf(FileUri));
+                //Uri convUri = getFileSchemeUri(uri);
                 try {
-                    Bitmap bp = android.provider.MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
+                    Bitmap bp = android.provider.MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), FileUri);
                     int width = bp.getWidth();
                     int height = bp.getHeight();
 
+                    //画像の向き
                     ExifInterface exifInterface;
-
                     try {
-                        exifInterface = new ExifInterface(uri.getPath());
+                        exifInterface = new ExifInterface(FileUri.getPath());
                     } catch (IOException e) {
+                        e.printStackTrace();
                         return;
                     }
 
                     int exifR = getExifint(exifInterface, ExifInterface.TAG_ORIENTATION);
                     int R = 0;
-
                     switch(exifR){
-                        case 6:
-                            R=90;
-                            break;
                         case 1:
                             R=0;
+                            break;
+                        case 3:
+                            R=180;
+                            break;
+                        case 6:
+                            R=90;
                             break;
                         case 8:
                             R=270;
                             break;
-                        case 3:
-                            R=180;
+                        default:
                             break;
                     }
 
@@ -399,8 +408,103 @@ public class CameraFragment extends Fragment {
             mListener.onFragmentInteraction(uri);
         }
     }
-    private int getExifint(ExifInterface ei,String tag) {
+    private int getExifint(ExifInterface ei, String tag) {
         return  Integer.parseInt(ei.getAttribute(tag));
+    }
+
+    public String getPathFromUri(final Context context, final Uri uri) {
+        boolean isAfterKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+        // DocumentProvider
+        Log.e(TAG,"uri:" + uri.getAuthority());
+        if (isAfterKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+            if ("com.android.externalstorage.documents".equals(
+                    uri.getAuthority())) {// ExternalStorageProvider
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+                if ("primary".equalsIgnoreCase(type)) {
+                    return Environment.getExternalStorageDirectory() + "/" + split[1];
+                }else {
+                    return "/stroage/" + type +  "/" + split[1];
+                }
+            }else if ("com.android.providers.downloads.documents".equals(
+                    uri.getAuthority())) {// DownloadsProvider
+                final String id = DocumentsContract.getDocumentId(uri);
+                final Uri contentUri = ContentUris.withAppendedId(
+                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+                return getDataColumn(context, contentUri, null, null);
+            }else if ("com.android.providers.media.documents".equals(
+                    uri.getAuthority())) {// MediaProvider
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+                Uri contentUri = null;
+                contentUri = MediaStore.Files.getContentUri("external");
+                final String selection = "_id=?";
+                final String[] selectionArgs = new String[] {
+                        split[1]
+                };
+                return getDataColumn(context, contentUri, selection, selectionArgs);
+            }
+        }else if ("content".equalsIgnoreCase(uri.getScheme())) {//MediaStore
+            return getDataColumn(context, uri, null, null);
+        }else if ("file".equalsIgnoreCase(uri.getScheme())) {// File
+            return uri.getPath();
+        }
+        return null;
+    }
+
+    public static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
+        Cursor cursor = null;
+        final String[] projection = {
+                MediaStore.Files.FileColumns.DATA
+        };
+        try {
+            cursor = context.getContentResolver().query(
+                    uri, projection, selection, selectionArgs, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                final int cindex = cursor.getColumnIndexOrThrow(projection[0]);
+                return cursor.getString(cindex);
+            }
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return null;
+    }
+
+
+    /**
+     * URIをFileスキームのURIに変換する.
+     * @param uri 変換前のURI  例) content://media/external/images/media/33
+     * @return 変換後のURI     例) file:///storage/sdcard/test1.jpg
+     */
+    private Uri getFileSchemeUri(Uri uri){
+        Uri fileSchemeUri = uri;
+        String path = getPath(uri);
+        fileSchemeUri = Uri.fromFile(new File(path));
+        Log.d("FileUri", String.valueOf(fileSchemeUri));
+        return fileSchemeUri;
+    }
+    private String getPath(Uri uri) {
+        String path = uri.toString();
+        if (path.matches("^file:.*")) {
+            return path.replaceFirst("file://", "");
+        } else if (!path.matches("^content:.*")) {
+            return path;
+        }
+        Context context = getContext();
+        ContentResolver contentResolver = context.getContentResolver();
+        String[] columns = { MediaStore.Images.Media.DATA };
+        Cursor cursor = contentResolver.query(uri, columns, null, null, null);
+        if (cursor != null){
+            if (cursor.getCount() > 0) {
+                cursor.moveToFirst();
+                path = cursor.getString(0);
+            }
+            cursor.close();
+        }
+        return path;
     }
 
 

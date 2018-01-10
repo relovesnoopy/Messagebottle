@@ -2,13 +2,17 @@ package jp.ac.hal.messagebottle;
 
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.Intent;
+
+
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.AsyncTask;
+
 import android.os.Bundle;
+
 import android.support.v4.app.Fragment;
+
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,22 +20,27 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.ListView;
+
+import android.widget.ImageView;
 import android.widget.Toast;
+
 import com.nifty.cloud.mb.core.NCMB;
+import com.nifty.cloud.mb.core.NCMBBase;
 import com.nifty.cloud.mb.core.NCMBException;
 import com.nifty.cloud.mb.core.NCMBObject;
 import com.nifty.cloud.mb.core.NCMBObjectService;
-import com.nifty.cloud.mb.core.NCMBRelation;
+import com.nifty.cloud.mb.core.NCMBQuery;
+
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -53,12 +62,16 @@ public class MainFragment extends Fragment implements
     private String mParam2;
 
     private GridView gridView;
-    private static final String TAG = "MainActivity";
+
     private ProgressDialog mProgressDialog;
     private OnFragmentInteractionListener mListener;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private Context context;
     private View rootView;
+    private List<NCMBObject> ncmbObjectList;
+
+
+    private MainFragmentLisner mainFragmentLisner;
     //画像のurl
     private static final String imageurl = "https://mb.api.cloud.nifty.com/2013-09-01/applications/Tn5D08kBenUjNx1R/publicFiles/";
 
@@ -92,7 +105,7 @@ public class MainFragment extends Fragment implements
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
         //リスト生成
-        taskExe();
+        //taskExe();
     }
 
 
@@ -118,18 +131,31 @@ public class MainFragment extends Fragment implements
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 GridView gv = (GridView)parent;
-                ImageEntity imageEntity = (ImageEntity)gv.getItemAtPosition(position);
+                //ImageEntity imageEntity = (ImageEntity)gv.getItemAtPosition(position);
+                FileEntity fileEntity = (FileEntity)gv.getItemAtPosition(position);
                 //一時保存
-                Bitmap bp = imageEntity.getThumbnail();
+                Bitmap bp = fileEntity.getDetailImage();
+                String filepath = changefile(bp).getAbsolutePath();
+                //String filepath = changefile(bitmap).getAbsolutePath();
+                mainFragmentLisner.OnShowChild(filepath);
+
+                /*
                 //Intentクラスのインスタンス化
                 Intent intent = new Intent(getActivity(), toImageActivity.class);
                 //転送情報をセット
                 intent.putExtra("image", changefile(bp).getAbsolutePath());
                 //Activityの移動
                 startActivity(intent);
+                */
             }
         });
 
+    }
+
+    @Override
+    public void onResume() {
+        taskExe();
+        super.onResume();
     }
 
     //画像を一時ファイルに保存
@@ -157,47 +183,51 @@ public class MainFragment extends Fragment implements
         taskExe();
         //ぐるぐる止める
         mSwipeRefreshLayout.setRefreshing(false);
-
     }
-
-
     private void taskExe() {
         //アップロード進捗状況表示
+        //mProgressDialog = new ProgressDialog(getActivity());
+        //mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        //mProgressDialog.setMessage("画像取得...");
+        //mProgressDialog.setCancelable(true);
+        //mProgressDialog.show();
+        List<FileEntity> filelist = AllLoadList();
+        //List<FileEntity> filelist = QueryLoad(0);
 
-        mProgressDialog = new ProgressDialog(getActivity());
-        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        mProgressDialog.setMessage("画像取得...");
-        mProgressDialog.setCancelable(true);
-        mProgressDialog.show();
+        CustomGridAdapter gridAdapter = new CustomGridAdapter(getActivity(), filelist);
+        gridView.setAdapter(gridAdapter);
+        String[] from_template = {"url, object_id"};
+        int[] to_template = {R.id.gridimageView};
+        List<Map<String, Object>> data = AllLoadMap();
+        //CustomGridAdapter gridAdapter = new CustomGridAdapter(getActivity(), data, R.layout.grid_item, from_template, to_template);
+        gridView.setAdapter(gridAdapter);
+        //mProgressDialog.dismiss();
 
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>(){
-            List<ImageEntity> listItems = new ArrayList<>();
-            List<FileEntity> filelist = loadfileentity();
-            @Override
-            protected Void doInBackground(Void... params) {
-                //画像取得
-                //リストに追加
-                for(FileEntity fe : filelist){
-                    ImageEntity item = new ImageEntity();
-                    item.setThumbnail(downloadImage(imageurl + fe.getFile()));
-                    item.setNcmbImage(imageurl + fe.getFile());
-                    listItems.add(item);
-                }
-                return null;
-            }
+    }
+    public List<Map<String, Object>> AllLoadMap(){
+        //すべてのデータ取得の場合NCMBObjectServiceを用いる
+        NCMBObjectService service = (NCMBObjectService)NCMB.factory(NCMB.ServiceType.OBJECT);
+        List<NCMBObject> list;
+        try {
+            list = service.searchObject("File", null);
+        } catch (NCMBException e) {
+            //エラー
+            Toast.makeText(getActivity(), "Failed loading messages", Toast.LENGTH_LONG).show();
+            return null;
+        }
+        List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
 
-            @Override
-            protected void onPostExecute(Void result){
-                CustomGridAdapter gridAdapter = new CustomGridAdapter(getActivity(), listItems);
-                gridView.setAdapter(gridAdapter);
-                mProgressDialog.dismiss();
-            }
-        };
-        task.execute();
+        for (NCMBObject obj : list) {
+            Map<String, Object> map = new HashMap<String, Object>();
+            map.put("url", imageurl + obj.getString("file"));
+            map.put("Object_id", obj.getString("objectId"));
+            data.add(map);
+        }
+        return data;
     }
 
     //ファイル名取得(検索条件なし)
-    public List<FileEntity> loadfileentity() {
+    public List<FileEntity> AllLoadList() {
         //すべてのデータ取得の場合NCMBObjectServiceを用いる
         NCMBObjectService service = (NCMBObjectService)NCMB.factory(NCMB.ServiceType.OBJECT);
         List<NCMBObject> list;
@@ -211,7 +241,8 @@ public class MainFragment extends Fragment implements
         List<FileEntity> filelist = new ArrayList<>();
         for (NCMBObject obj : list) {
             FileEntity fe = new FileEntity();
-            fe.setFile(obj.getString("file"));
+            //画像のパス
+            fe.setFile(imageurl + obj.getString("file"));
             fe.setObject_id(obj.getString("objectId"));
             fe.setFile_genre(obj.getString("file_id"));
             filelist.add(fe);
@@ -219,48 +250,52 @@ public class MainFragment extends Fragment implements
         return filelist;
     }
 
+    //ファイル名取得(検索条件あり)
+    public List<FileEntity> QueryLoad(int genre_id) {
+        //すべてのデータ取得の場合NCMBObjectServiceを用いる
+        NCMBQuery<NCMBObject> ncmbQuery = new NCMBQuery ("File");
+        List<FileEntity> filelist = new ArrayList<>();
+        ncmbQuery.whereEqualTo("genre_id", genre_id );
 
-
-
-    private Bitmap downloadImage(String address) {
-        Bitmap bmp = null;
-        try {
-            URL url = new URL( address );
-            // HttpURLConnection インスタンス生成
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            // タイムアウト設定
-            urlConnection.setReadTimeout(10000);
-            urlConnection.setConnectTimeout(20000);
-            // リクエストメソッド
-            urlConnection.setRequestMethod("GET");
-            // リダイレクトを自動で許可しない設定
-            urlConnection.setInstanceFollowRedirects(false);
-            // ヘッダーの設定(複数設定可能)
-            urlConnection.setRequestProperty("Accept-Language", "jp");
-            // 接続
-            urlConnection.connect();
-
-            int resp = urlConnection.getResponseCode();
-            switch (resp){
-                case HttpURLConnection.HTTP_OK:
-                    InputStream is = urlConnection.getInputStream();
-                    bmp = BitmapFactory.decodeStream(is);
-                    is.close();
-                    break;
-                case HttpURLConnection.HTTP_UNAUTHORIZED:
-                    break;
-                default:
-                    break;
+        ncmbQuery.findInBackground((List<NCMBObject> list, NCMBException e) -> {
+            if(e != null){
+                //エラー処理
+                Log.e("genreError","noload");
+            }else{
+               ncmbObjectList = list;
             }
-        } catch (Exception e) {
-            Log.d(TAG, "画像のダウンロードに失敗しました"
-            + address);
-            e.printStackTrace();
+
+        });
+        if(ncmbObjectList != null) {
+            for (NCMBObject obj : ncmbObjectList) {
+                FileEntity fe = new FileEntity();
+                //画像のパス
+                fe.setFile(imageurl + obj.getString("file"));
+                fe.setObject_id(obj.getString("objectId"));
+                fe.setFile_genre(obj.getString("file_id"));
+                fe.setFile_genre(LoadGenre(obj.getInt("genre_id")));
+                Log.e("genreError", String.valueOf(obj.getInt("genre_id")));
+                filelist.add(fe);
+            }
         }
 
-        return bmp;
+        return filelist;
     }
+    public String LoadGenre(int genre_id){
+        NCMBObject genreQuery = new NCMBObject ("Genre");
+        final String[] result = {null};
+        genreQuery.put("genre_id", genre_id);
+        genreQuery.fetchInBackground((NCMBBase ncmbBase, NCMBException e) -> {
+            if(e != null){
 
+            }else {
+                result[0] = ncmbBase.getString("genre_id");
+            }
+
+        });
+
+        return result[0];
+    }
 
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
@@ -274,6 +309,12 @@ public class MainFragment extends Fragment implements
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
+            if(context instanceof MainFragmentLisner){
+                mainFragmentLisner = (MainFragmentLisner) context;
+            } else {
+                throw new RuntimeException(context.toString()
+                        + " must implement OnFragmentInteractionListener");
+            }
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");
@@ -285,6 +326,8 @@ public class MainFragment extends Fragment implements
         super.onDetach();
         mListener = null;
     }
+
+
 
     /**
      * This interface must be implemented by activities that contain this
@@ -299,5 +342,8 @@ public class MainFragment extends Fragment implements
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+    }
+    protected interface MainFragmentLisner{
+        void OnShowChild(String filepath);
     }
 }

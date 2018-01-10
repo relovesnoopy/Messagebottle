@@ -40,6 +40,7 @@ public class ImageUploadActivity extends AppCompatActivity {
             final ImageView imageView = (ImageView)findViewById(R.id.select_image);
             imageView.setImageBitmap(bp);
             //タグ取得
+
             //Spinnerにセット
             ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item);
             //Spinnerのインスタンス化
@@ -79,6 +80,7 @@ public class ImageUploadActivity extends AppCompatActivity {
             Button btn = (Button) findViewById(R.id.nextPage);
             final Intent intent = new Intent();
 
+
             btn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -86,8 +88,6 @@ public class ImageUploadActivity extends AppCompatActivity {
                     intent.putExtra("image", MainFragment.changefile(((BitmapDrawable)imageView.getDrawable()).getBitmap()).getAbsolutePath());
                     //intent.putExtra("genre", (String)sp.getSelectedItem());
                     intent.putExtra("genre", sp.getSelectedItemPosition());
-
-
                     setResult(RESULT_OK, intent);
                     finish();
                 }

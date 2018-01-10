@@ -1,9 +1,14 @@
 package jp.ac.hal.messagebottle;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
+import java.io.ByteArrayOutputStream;
 import java.util.Date;
 
 /**
  * Created by muto.masakazu on 2017/09/04.
+ * NCMBで使用するファイル情報
  */
 
 public class FileEntity {
@@ -11,6 +16,7 @@ public class FileEntity {
     private String file;
     private String file_genre;
     private Date TimeStamp;
+    private byte[] bytes = null;
 
     public String getObject_id() {
         return Object_id;
@@ -44,5 +50,18 @@ public class FileEntity {
         TimeStamp = timeStamp;
     }
 
+    public void setDetailImage(Bitmap thumbnail) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        bytes = baos.toByteArray();
+    }
 
+
+    public Bitmap getDetailImage() {
+        Bitmap bmp = null;
+        if (bytes != null) {
+            bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        }
+        return bmp;
+    }
 }
