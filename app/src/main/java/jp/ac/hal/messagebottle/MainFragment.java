@@ -19,6 +19,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.GridView;
 
 import android.widget.ImageView;
@@ -37,6 +38,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +60,7 @@ public class MainFragment extends Fragment implements
     private static final String ARG_PARAM2 = "param2";
 
     // TODO: Rename and change types of parameters
-    private String mParam1;
+    private int mParam1;
     private String mParam2;
 
     private GridView gridView;
@@ -69,7 +71,7 @@ public class MainFragment extends Fragment implements
     private Context context;
     private View rootView;
     private List<NCMBObject> ncmbObjectList;
-
+    private int USERCODE;
 
     private MainFragmentLisner mainFragmentLisner;
     //画像のurl
@@ -83,15 +85,15 @@ public class MainFragment extends Fragment implements
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param param1 Parameter 1.
+     * @param param Parameter 1.
      * @param param2 Parameter 2.
      * @return A new instance of fragment MainFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static MainFragment newInstance(String param1, String param2) {
+    public static MainFragment newInstance(int param, String param2) {
         MainFragment fragment = new MainFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
+        args.putInt(ARG_PARAM1, param);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
@@ -101,9 +103,10 @@ public class MainFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
+            mParam1 = getArguments().getInt(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
         //リスト生成
         //taskExe();
     }
@@ -124,32 +127,28 @@ public class MainFragment extends Fragment implements
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        //リスト生成
-        //taskExe();
+
         //リストから画像を選択
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                GridView gv = (GridView)parent;
-                //ImageEntity imageEntity = (ImageEntity)gv.getItemAtPosition(position);
-                FileEntity fileEntity = (FileEntity)gv.getItemAtPosition(position);
-                //一時保存
-                Bitmap bp = fileEntity.getDetailImage();
-                String filepath = changefile(bp).getAbsolutePath();
-                //String filepath = changefile(bitmap).getAbsolutePath();
-                mainFragmentLisner.OnShowChild(filepath);
-
-                /*
-                //Intentクラスのインスタンス化
-                Intent intent = new Intent(getActivity(), toImageActivity.class);
-                //転送情報をセット
-                intent.putExtra("image", changefile(bp).getAbsolutePath());
-                //Activityの移動
-                startActivity(intent);
-                */
+        gridView.setOnItemClickListener((parent, view1, position, id) -> {
+            GridView gv = (GridView)parent;
+            FileEntity fileEntity = (FileEntity)gv.getItemAtPosition(position);
+            //一時保存
+            Bitmap bp = fileEntity.getDetailImage();
+            String filepath = changefile(bp).getAbsolutePath();
+            String _objectId = null;
+            switch (mParam1){
+                case Userfragment.RECEPTIONCODE :
+                    _objectId = "_object";
+                    break;
+                case Userfragment.SENDCODE:
+                    //自分のメッセージ
+                    _objectId = fileEntity.getObject_id();
+                    break;
+                default:
+                    break;
             }
+            mainFragmentLisner.OnShowChild(filepath, _objectId);
         });
-
     }
 
     @Override
@@ -185,46 +184,27 @@ public class MainFragment extends Fragment implements
         mSwipeRefreshLayout.setRefreshing(false);
     }
     private void taskExe() {
-        //アップロード進捗状況表示
-        //mProgressDialog = new ProgressDialog(getActivity());
-        //mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        //mProgressDialog.setMessage("画像取得...");
-        //mProgressDialog.setCancelable(true);
-        //mProgressDialog.show();
-        List<FileEntity> filelist = AllLoadList();
-        //List<FileEntity> filelist = QueryLoad(0);
 
+        List<FileEntity> filelist = null;
+        //消去ボタン非表示
+
+        switch (mParam1){
+            case Userfragment.RECEPTIONCODE :
+                //全てのメッセージ
+                 filelist = AllLoadList();
+                break;
+            case Userfragment.SENDCODE:
+                //自分のメッセージ
+                break;
+            default:
+                break;
+        }
+        //List<FileEntity> filelist = QueryLoad(0);
         CustomGridAdapter gridAdapter = new CustomGridAdapter(getActivity(), filelist);
         gridView.setAdapter(gridAdapter);
-        String[] from_template = {"url, object_id"};
-        int[] to_template = {R.id.gridimageView};
-        List<Map<String, Object>> data = AllLoadMap();
-        //CustomGridAdapter gridAdapter = new CustomGridAdapter(getActivity(), data, R.layout.grid_item, from_template, to_template);
-        gridView.setAdapter(gridAdapter);
-        //mProgressDialog.dismiss();
 
     }
-    public List<Map<String, Object>> AllLoadMap(){
-        //すべてのデータ取得の場合NCMBObjectServiceを用いる
-        NCMBObjectService service = (NCMBObjectService)NCMB.factory(NCMB.ServiceType.OBJECT);
-        List<NCMBObject> list;
-        try {
-            list = service.searchObject("File", null);
-        } catch (NCMBException e) {
-            //エラー
-            Toast.makeText(getActivity(), "Failed loading messages", Toast.LENGTH_LONG).show();
-            return null;
-        }
-        List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
 
-        for (NCMBObject obj : list) {
-            Map<String, Object> map = new HashMap<String, Object>();
-            map.put("url", imageurl + obj.getString("file"));
-            map.put("Object_id", obj.getString("objectId"));
-            data.add(map);
-        }
-        return data;
-    }
 
     //ファイル名取得(検索条件なし)
     public List<FileEntity> AllLoadList() {
@@ -264,7 +244,6 @@ public class MainFragment extends Fragment implements
             }else{
                ncmbObjectList = list;
             }
-
         });
         if(ncmbObjectList != null) {
             for (NCMBObject obj : ncmbObjectList) {
@@ -278,9 +257,9 @@ public class MainFragment extends Fragment implements
                 filelist.add(fe);
             }
         }
-
         return filelist;
     }
+
     public String LoadGenre(int genre_id){
         NCMBObject genreQuery = new NCMBObject ("Genre");
         final String[] result = {null};
@@ -291,9 +270,7 @@ public class MainFragment extends Fragment implements
             }else {
                 result[0] = ncmbBase.getString("genre_id");
             }
-
         });
-
         return result[0];
     }
 
@@ -344,6 +321,6 @@ public class MainFragment extends Fragment implements
         void onFragmentInteraction(Uri uri);
     }
     protected interface MainFragmentLisner{
-        void OnShowChild(String filepath);
+        void OnShowChild(String filepath, String Object_id);
     }
 }

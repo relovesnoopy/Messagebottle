@@ -78,12 +78,10 @@ public class Login extends AppCompatActivity {
                         onLoginFailed();
                     } else {
                         new android.os.Handler().postDelayed(
-                                new Runnable() {
-                                    public void run() {
-                                        // On complete call either onLoginSuccess or onLoginFailed
-                                        onLoginSuccess();
-                                        progressDialog.dismiss();
-                                    }
+                                () -> {
+                                    // On complete call either onLoginSuccess or onLoginFailed
+                                    onLoginSuccess();
+                                    progressDialog.dismiss();
                                 }, 3000);
                     }
                 }
@@ -108,9 +106,9 @@ public class Login extends AppCompatActivity {
     public void onBackPressed() {
         // Disable going back to the MainActivity
         super.onBackPressed();
-        Toast.makeText(getBaseContext(), "back", Toast.LENGTH_LONG).show();
+        //Toast.makeText(getBaseContext(), "back", Toast.LENGTH_LONG).show();
         finish();
-        moveTaskToBack(true);
+        //moveTaskToBack(true);
 
     }
 

@@ -15,6 +15,7 @@ import android.widget.ImageView;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 
 import io.reactivex.Single;
@@ -27,13 +28,10 @@ import io.reactivex.schedulers.Schedulers;
  * Created by muto.masakazu on 2017/11/16.
  */
 
-
-
 public class CustomGridAdapter extends ArrayAdapter<FileEntity>{
     private int mResource;
     private List<FileEntity> mItems;
     private LayoutInflater mInflater;
-    private String tag;
     private Context context;
     //gridviewで画像表示するためのレイアウト
     private static final int RESOURCE_ID = R.layout.grid_item;
@@ -41,6 +39,7 @@ public class CustomGridAdapter extends ArrayAdapter<FileEntity>{
     public CustomGridAdapter(Context context,List<FileEntity> objects) {
         super(context, RESOURCE_ID, objects);
         mItems = objects;
+        Collections.reverse(mItems);
         this.context = context;
         mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
@@ -80,14 +79,9 @@ public class CustomGridAdapter extends ArrayAdapter<FileEntity>{
             // AsyncTaskは１回しか実行できない為、毎回インスタンスを生成
             ImageGetTask task = new ImageGetTask(viewHolder.image);
             //画像を設定
-            task.setOnCallBack(result ->
-                //Bitmap bitmap = ((BitmapDrawable)viewHolder.image.getDrawable()).getBitmap();
-                entity.setDetailImage(result)
-            );
+            //Bitmap bitmap = ((BitmapDrawable)viewHolder.image.getDrawable()).getBitmap();
+            task.setOnCallBack(entity::setDetailImage);
             task.execute(NCMBPath, object_id);
-
-
-
         }
         catch(Exception e){
             viewHolder.image.setImageDrawable(context.getResources().getDrawable(R.drawable.noimage));
@@ -209,7 +203,7 @@ public class CustomGridAdapter extends ArrayAdapter<FileEntity>{
                     //画像の設定
                     image.setImageBitmap(result);
                 } else {
-                    Log.v("downloadimage", tag + "&" + image.getTag());
+                    Log.v("DownloadImage", tag + "&" + image.getTag());
                     image.setImageDrawable(context.getResources().getDrawable(R.drawable.noimage));
                 }
                 //取得した画像を表示

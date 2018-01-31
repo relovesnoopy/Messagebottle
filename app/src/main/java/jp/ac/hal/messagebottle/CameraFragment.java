@@ -136,141 +136,126 @@ public class CameraFragment extends Fragment {
         //表示用ImageViewインスタンス化
         iv = (ImageView)view.findViewById(R.id.imageView);
 
-        choosebtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                /*
-                //カメラの起動Intentの用意
-                if (Build.VERSION.SDK_INT >= 23) {
-                    checkPermission();
-                }
-                else {
-                    //Intentを返す
-                    intentCamera = cameraIntent();
-                }
-                */
-                intentCamera = cameraIntent();
-
-                // ギャラリー用のIntent作成
-                Intent intentGallery;
-                if (Build.VERSION.SDK_INT < 19) {
-                    intentGallery = new Intent(Intent.ACTION_GET_CONTENT);
-                    intentGallery.setType("image/*");
-                } else {
-                    intentGallery = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                    intentGallery.addCategory(Intent.CATEGORY_OPENABLE);
-                    //intentGallery = new Intent(Intent.ACTION_GET_CONTENT);
-                   // intentGallery.setType("image/*");
-                    intentGallery.setType("*/*");
-                }
-
-                //ChooserにGallaryのIntentとCameraのIntentを登録
-                Intent intent = Intent.createChooser(intentGallery, "画像の選択");
-                if(intentCamera != null){
-                    intent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {intentCamera});
-                }
-                startActivityForResult(intent, REQUEST_CHOOSER);
+        choosebtn.setOnClickListener(v -> {
+            /*
+            //カメラの起動Intentの用意
+            if (Build.VERSION.SDK_INT >= 23) {
+                checkPermission();
             }
+            else {
+                //Intentを返す
+                intentCamera = cameraIntent();
+            }
+            */
+            intentCamera = cameraIntent();
+
+            // ギャラリー用のIntent作成
+            Intent intentGallery;
+            if (Build.VERSION.SDK_INT < 19) {
+                intentGallery = new Intent(Intent.ACTION_GET_CONTENT);
+                intentGallery.setType("image/*");
+            } else {
+                intentGallery = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intentGallery.addCategory(Intent.CATEGORY_OPENABLE);
+                //intentGallery = new Intent(Intent.ACTION_GET_CONTENT);
+               // intentGallery.setType("image/*");
+                intentGallery.setType("*/*");
+            }
+
+            //ChooserにGallaryのIntentとCameraのIntentを登録
+            Intent intent = Intent.createChooser(intentGallery, "画像の選択");
+            if(intentCamera != null){
+                intent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {intentCamera});
+            }
+            startActivityForResult(intent, REQUEST_CHOOSER);
         });
 
-        uploadbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(!uploadflg){
-                    Toast.makeText(getActivity(), "画像が選択されていません", Toast.LENGTH_LONG).show();
-                } else {
-                    //アップロード進捗状況表示
-                    mProgressDialog = new ProgressDialog(getActivity());
-                    mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-                    mProgressDialog.setMessage("アップロード中です...");
-                    mProgressDialog.setCancelable(true);
-                    mProgressDialog.show();
-                    Bitmap bp = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+        uploadbtn.setOnClickListener((View v) -> {
+            if(!uploadflg){
+                Toast.makeText(getActivity(), "画像が選択されていません", Toast.LENGTH_LONG).show();
+            } else {
+                //アップロード進捗状況表示
+                mProgressDialog = new ProgressDialog(getActivity());
+                mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                mProgressDialog.setMessage("アップロード中です...");
+                mProgressDialog.setCancelable(true);
+                mProgressDialog.show();
+                Bitmap bp = ((BitmapDrawable) iv.getDrawable()).getBitmap();
 
-                    //ファイルのアップロード
-                    ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-                    bp.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayStream);
-                    byte[] dataByte = byteArrayStream.toByteArray();
+                //ファイルのアップロード
+                ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+                bp.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayStream);
+                byte[] dataByte = byteArrayStream.toByteArray();
 
-                    //読み込み 書き込み 許可
-                    NCMBAcl acl = new NCMBAcl();
-                    acl.setPublicReadAccess(true);
-                    acl.setPublicWriteAccess(true);
+                //読み込み 書き込み 許可
+                NCMBAcl acl = new NCMBAcl();
+                acl.setPublicReadAccess(true);
+                acl.setPublicWriteAccess(true);
 
-                    //データベース取得,データベース接続
-                    DBOpenHelper dbh = new DBOpenHelper(getActivity());
-                    SQLiteDatabase db = dbh.getWritableDatabase();
-                    // 抽出する列名(フィールド名)をString型の配列で記述する
-                    String[] col = {"_id", "filenum"};
+                //データベース取得,データベース接続
+                DBOpenHelper dbh = new DBOpenHelper(getActivity());
+                SQLiteDatabase db = dbh.getWritableDatabase();
+                // 抽出する列名(フィールド名)をString型の配列で記述する
+                String[] col = {"_id", "filenum"};
 
-                    // SQLの実行
-                    Cursor c = db.query("userfile", col, null, null, null, null, null);
-                    // カーソルを先頭データへ
-                    boolean b = c.moveToFirst();
-                    int fileid = 0;
-                    while (b) {
-                        int f_num = c.getInt(c.getColumnIndex("filenum"));
-                        //if (fileid < kari) {
-                        fileid = f_num;
-                        // }
-                        // 次のデータへ
-                        b = c.moveToNext();
-                    }
-                    fileid++;
-                    //データベース追加更新
-                    ContentValues values = new ContentValues();
-                    values.put("filenum", 0 + fileid);
-                    db.insert("userfile", null, values);
-
-                    //NCMBデータストア書き込み
-                    NCMBObject fileObj = new NCMBObject("File");
-                    //ファイル名:ユーザ名 + fileid.jpg
-                    fileObj.put("file", user_name + fileid + ".jpg");
-                    fileObj.put("file_id", fileid);
-                    fileObj.put("genre_id", genreid);
-                    fileObj.saveInBackground(new DoneCallback() {
-                        @Override
-                        public void done(NCMBException e) {
-                            if (e != null) {
-                                Toast.makeText(getActivity(), "送信に失敗しました", Toast.LENGTH_LONG).show();
-                                return;
-                            }
-                            // update all messages
-                        }
-                    });
-
-                    //通信実施
-                    //アップロード処理
-                    final NCMBFile file = new NCMBFile(user_name + fileid + ".jpg", dataByte, acl);
-                    file.saveInBackground(new DoneCallback() {
-                        @Override
-                        public void done(NCMBException e) {
-                            if (e != null) {
-                                //保存失敗
-                                mProgressDialog.dismiss();
-                                new AlertDialog.Builder(getActivity())
-                                        .setTitle("Error")
-                                        .setMessage("アップロードエラー:" + e.getMessage())
-                                        .setPositiveButton("OK", null)
-                                        .show();
-                            } else {
-                                //アップロード通知
-                                //画像初期化
-                                mProgressDialog.dismiss();
-                                new AlertDialog.Builder(getActivity()).setTitle("Up Load")
-                                        .setMessage("アップロード完了")
-                                        .setPositiveButton("OK", null)
-                                        .show();
-                                //初期化
-                                uploadflg = false;
-                                genreid = 0;
-                                iv.setImageResource(R.drawable.noimage);
-
-                            }
-                        }
-                    });
+                // SQLの実行
+                Cursor c = db.query("userfile", col, null, null, null, null, null);
+                // カーソルを先頭データへ
+                boolean b = c.moveToFirst();
+                int fileid = 0;
+                while (b) {
+                    //if (fileid < kari) {
+                    fileid = c.getInt(c.getColumnIndex("filenum"));
+                    // }
+                    // 次のデータへ
+                    b = c.moveToNext();
                 }
+                fileid++;
+                //データベース追加更新
+                ContentValues values = new ContentValues();
+                values.put("filenum", fileid);
+                db.insert("userfile", null, values);
 
+                //NCMBデータストア書き込み
+                NCMBObject fileObj = new NCMBObject("File");
+                //ファイル名:ユーザ名 + fileid.jpg
+                fileObj.put("file", user_name + fileid + ".jpg");
+                fileObj.put("file_id", fileid);
+                fileObj.put("genre_id", genreid);
+                fileObj.saveInBackground(e -> {
+                    if (e != null) {
+                        Toast.makeText(getActivity(), "送信に失敗しました", Toast.LENGTH_LONG).show();
+                    }
+                    // update all messages
+                });
+
+                //通信実施
+                //アップロード処理
+                final NCMBFile file = new NCMBFile(user_name + fileid + ".jpg", dataByte, acl);
+                file.saveInBackground(e ->{
+                        if (e != null) {
+                            //保存失敗
+                            mProgressDialog.dismiss();
+                            new AlertDialog.Builder(getActivity())
+                                    .setTitle("Error")
+                                    .setMessage("アップロードエラー:" + e.getMessage())
+                                    .setPositiveButton("OK", null)
+                                    .show();
+                        } else {
+                            //アップロード通知
+                            //画像初期化
+                            mProgressDialog.dismiss();
+                            new AlertDialog.Builder(getActivity()).setTitle("Up Load")
+                                    .setMessage("アップロード完了")
+                                    .setPositiveButton("OK", null)
+                                    .show();
+                            //初期化
+                            uploadflg = false;
+                            genreid = 0;
+                            iv.setImageResource(R.drawable.noimage);
+
+                        }
+                });
             }
         });
     }

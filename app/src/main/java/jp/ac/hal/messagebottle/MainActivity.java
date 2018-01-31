@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements MainFragment.OnFr
 
             // アダプターに各ページ要素となるフラグメントを追加
             pagerAdapter.addFragment(CameraFragment.newInstance("camera", "カメラ"));
-            pagerAdapter.addFragment(CameraFragment.newInstance("main", "メッセージ一覧"));
+            //pagerAdapter.addFragment(CameraFragment.newInstance("main", "メッセージ一覧"));
             pagerAdapter.addFragment(Userfragment.newInstance("setting", "設定"));
 
             // ViewPagerにアダプタをセット
@@ -86,13 +86,7 @@ public class MainActivity extends AppCompatActivity implements MainFragment.OnFr
             startActivity(intent);*/
             setContentView(R.layout.top_layout);
             ImageView topimage = (ImageView)findViewById(R.id.topimage);
-            topimage.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    loginflg = true;
-
-                }
-            });
+            topimage.setOnClickListener(v -> loginflg = true);
         }
     }
 

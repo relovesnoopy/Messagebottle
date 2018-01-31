@@ -7,7 +7,9 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
+import com.nifty.cloud.mb.core.NCMBObject
 
 
 /**
@@ -23,9 +25,8 @@ class ChildMainFragment : Fragment() {
     // TODO: Rename and change types of parameters
     private var mParam1: String? = null
     private var mParam2: String? = null
-
-
     private var mListener: ChildMainFragmentListener? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,9 +41,38 @@ class ChildMainFragment : Fragment() {
         // Inflate the layout for this fragment
         val view = inflater!!.inflate(R.layout.fragment_child_main, container, false)
         val imageView = view.findViewById(R.id.ChildImage) as ImageView
-        imageView.setImageBitmap(ImageManage().scaleBitmap(mParam1))
-        imageView.setOnClickListener { v -> mListener!!.onCloseChildMain() }
+        imageView.setImageBitmap(ImageManage().scaleBitmap(mParam1!!))
+        imageView.setOnClickListener { mListener!!.onCloseChildMain() }
+
+        val deleteBtn = view.findViewById(R.id.DeleteDispBtn) as Button
+        if(!mParam2.equals("_object")){ deleteBtn.visibility = View.INVISIBLE }
+
+        deleteBtn.setOnClickListener{ deleteMessage(mParam2!!)}
         return view
+    }
+    private fun deleteMessage(_objectID: String) {
+        //削除処理
+        val obj = NCMBObject("File")
+        obj.objectId = _objectID
+        obj.fetchInBackground{ obj2 , e ->
+            if (e != null) {
+                // 取得に失敗した場合の処理
+                e.printStackTrace()
+            } else {
+                // 取得に成功した場合の処理
+                if( obj2 is NCMBObject){
+                    obj2.deleteObjectInBackground { e2 ->
+                        if (e2 != null) {
+                            e2.printStackTrace()
+                        } else {
+                            //モーダルウィンドウを閉じる
+                            mListener?.onCloseChildMain()
+                        }
+                    }
+                }
+            }
+        }
+
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -99,11 +129,11 @@ class ChildMainFragment : Fragment() {
          * @return A new instance of fragment ChildMainFragment.
          */
         // TODO: Rename and change types and number of parameters
-        fun newInstance(filepath: String, param2: String): ChildMainFragment {
+        fun newInstance(filepath: String, _objectID: String): ChildMainFragment {
             val fragment = ChildMainFragment()
             val args = Bundle()
             args.putString(ARG_PARAM1, filepath)
-            args.putString(ARG_PARAM2, param2)
+            args.putString(ARG_PARAM2, _objectID)
             fragment.arguments = args
             return fragment
         }
