@@ -18,7 +18,6 @@ import com.nifty.cloud.mb.core.NCMBObject
  */
 class MainContentsActivity : AppCompatActivity(), MainFragment.MainFragmentLisner, ChildMainFragment.ChildMainFragmentListener, MainFragment.OnFragmentInteractionListener{
     private var behavior: BottomSheetBehavior<*>? = null
-    private var USERCODE: Int = 0
     private var fileEntity: FileEntity? = null
     private var MESSAGECODE:Int = 0
 
@@ -27,8 +26,7 @@ class MainContentsActivity : AppCompatActivity(), MainFragment.MainFragmentLisne
         setContentView(R.layout.activity_main_contents)
         val toolbar = findViewById(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
-        USERCODE = intent.getIntExtra("User", 0)
-        MESSAGECODE = intent.getIntExtra("MESSAGECODE", 0)
+        MESSAGECODE = intent.getIntExtra("MESSAGE", 0)
         //java:getSupportActionBar() kt:supportActionBar!!
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         supportActionBar!!.setHomeButtonEnabled(true)
@@ -43,8 +41,7 @@ class MainContentsActivity : AppCompatActivity(), MainFragment.MainFragmentLisne
         fragmentTransaction.add(R.id.fragment_parent, MainFragment.newInstance(MESSAGECODE, "p2"))
         fragmentTransaction.commit()
     }
-
-
+    
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         val id = item?.itemId
         var result = true
@@ -55,10 +52,10 @@ class MainContentsActivity : AppCompatActivity(), MainFragment.MainFragmentLisne
         return result
     }
 
-    override fun OnShowChild(filepath: String, _objectID: String) {
+    override fun OnShowChild(filepath: String, _objectID: String, boolean: Boolean) {
         val ft = supportFragmentManager.beginTransaction()
         this.fileEntity = fileEntity
-        ft.replace(R.id.child_fragment, ChildMainFragment.newInstance(filepath, _objectID))
+        ft.replace(R.id.child_fragment, ChildMainFragment.newInstance(filepath, _objectID, boolean))
         ft.commit()
         behavior!!.state = BottomSheetBehavior.STATE_EXPANDED
     }

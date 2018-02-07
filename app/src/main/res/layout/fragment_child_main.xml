@@ -29,4 +29,17 @@
         android:layout_below="@+id/ChildImage"
         android:layout_marginTop="12dp"
         android:text="Button" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/favoriteBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/ChildImage"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="11dp"
+        android:clickable="true"
+        android:src="@drawable/iconstar"
+        app:backgroundTint="@android:color/holo_blue_bright" />
+
 </RelativeLayout>

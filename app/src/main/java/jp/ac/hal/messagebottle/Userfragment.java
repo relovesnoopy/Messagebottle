@@ -38,9 +38,7 @@ public class Userfragment extends Fragment {
     private static final int USERCODE = 500;
     public static final int RECEPTIONCODE = 1000;
     public static final int SENDCODE = 1100;
-    private enum ImageCode{
-        employer, self
-    }
+
 
     private OnFragmentInteractionListener mListener;
 
@@ -102,13 +100,17 @@ public class Userfragment extends Fragment {
             Intent intent = new Intent(getActivity(), SignupActivity.class);
             startActivityForResult(intent, USERCODE);
         });
-        SendMessageBtn.setOnClickListener(v -> {
 
+        SendMessageBtn.setOnClickListener(v -> {
+            /*Intent intent = new Intent(getActivity(), MainContentsActivity.class);
+
+            intent.putExtra("MESSAGE", SENDCODE);
+            startActivity(intent);*/
         });
+
         ReceptionMessageBtn.setOnClickListener(v ->{
             Intent intent = new Intent(getActivity(), MainContentsActivity.class);
-            intent.putExtra("User", ImageCode.employer);
-            intent.putExtra("MESSAGECODE", RECEPTIONCODE);
+            intent.putExtra("MESSAGE", RECEPTIONCODE);
             startActivity(intent);
         });
 

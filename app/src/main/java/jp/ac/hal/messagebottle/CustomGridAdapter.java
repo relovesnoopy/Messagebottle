@@ -82,8 +82,7 @@ public class CustomGridAdapter extends ArrayAdapter<FileEntity>{
             //Bitmap bitmap = ((BitmapDrawable)viewHolder.image.getDrawable()).getBitmap();
             task.setOnCallBack(entity::setDetailImage);
             task.execute(NCMBPath, object_id);
-        }
-        catch(Exception e){
+        } catch(Exception e) {
             viewHolder.image.setImageDrawable(context.getResources().getDrawable(R.drawable.noimage));
             viewHolder.image.setVisibility(View.VISIBLE);
         }
@@ -91,22 +90,23 @@ public class CustomGridAdapter extends ArrayAdapter<FileEntity>{
         //非同期画像取得
 
         /*
-            Single.create((SingleOnSubscribe<Bitmap>) emitter -> {
-                // 一個emitして完了
-                //emitter.onSuccess(downloadImage(entity.getFile()));
-                emitter.onSuccess(downloadImage(NCMBPath));
-            }).subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(bitmap -> {
-                    // 一回呼ばれる
-                    viewHolder.image.setImageBitmap(bitmap);
-                    entity.setDetailImage(bitmap);
-                    viewHolder.image.setVisibility(View.VISIBLE);
+        Single.create((SingleOnSubscribe<Bitmap>) emitter -> {
+            // 一個emitして完了
+            //emitter.onSuccess(downloadImage(entity.getFile()));
+            emitter.onSuccess(downloadImage(NCMBPath));
+        }).subscribeOn(Schedulers.newThread())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(bitmap -> {
+                // 一回呼ばれる
+                viewHolder.image.setImageBitmap(bitmap);
+                entity.setDetailImage(bitmap);
+                viewHolder.image.setVisibility(View.VISIBLE);
 
-                },throwable ->
-                        viewHolder.image.setImageResource(R.drawable.noimage)
-                );
-        */
+            },throwable ->
+                    viewHolder.image.setImageResource(R.drawable.noimage)
+            );
+          */
+
 
         return convertView;
     }

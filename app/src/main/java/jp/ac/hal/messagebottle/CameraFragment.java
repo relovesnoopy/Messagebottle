@@ -10,14 +10,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.ExifInterface;
-import android.media.MediaScannerConnection;
+
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,29 +30,38 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageButton;
+
 import android.widget.ImageView;
-import android.widget.ListView;
+
 import android.widget.Toast;
 
-import com.nifty.cloud.mb.core.DoneCallback;
-import com.nifty.cloud.mb.core.FetchFileCallback;
-import com.nifty.cloud.mb.core.FindCallback;
 import com.nifty.cloud.mb.core.NCMBAcl;
+
 import com.nifty.cloud.mb.core.NCMBException;
 import com.nifty.cloud.mb.core.NCMBFile;
 import com.nifty.cloud.mb.core.NCMBObject;
-import com.nifty.cloud.mb.core.NCMBQuery;
+
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 
+import io.reactivex.Completable;
+import io.reactivex.CompletableEmitter;
+import io.reactivex.CompletableOnSubscribe;
+import io.reactivex.Single;
+import io.reactivex.SingleOnSubscribe;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.observers.DisposableCompletableObserver;
+import io.reactivex.observers.DisposableSingleObserver;
+import io.reactivex.schedulers.Schedulers;
+
 import static android.app.Activity.RESULT_OK;
 import static android.content.ContentValues.TAG;
-import static jp.ac.hal.messagebottle.MainActivity.getContext;
-import static jp.ac.hal.messagebottle.MainActivity.user_name;
+
+
 
 
 /**
@@ -219,19 +226,31 @@ public class CameraFragment extends Fragment {
                 //NCMBデータストア書き込み
                 NCMBObject fileObj = new NCMBObject("File");
                 //ファイル名:ユーザ名 + fileid.jpg
-                fileObj.put("file", user_name + fileid + ".jpg");
+                String UserName = MainActivity.Companion.getUser_name();
+                fileObj.put("file", UserName + fileid + ".jpg");
                 fileObj.put("file_id", fileid);
                 fileObj.put("genre_id", genreid);
-                fileObj.saveInBackground(e -> {
+                fileObj.put("UserName", UserName);
+                try {
+                    fileObj.save();
+                } catch (NCMBException e) {
+                    e.printStackTrace();
+                }
+                NCMBObject userObj = new NCMBObject("User");
+                userObj.put("UserName", UserName);
+                userObj.put("pointer", fileObj);
+                userObj.saveInBackground( e -> {
                     if (e != null) {
-                        Toast.makeText(getActivity(), "送信に失敗しました", Toast.LENGTH_LONG).show();
+                        // 取得に失敗した場合の処理
+                        Log.e("NCMB_ERROR","Nopointer");
+                    } else{
+                        // 取得に成功した場合の処理
                     }
-                    // update all messages
                 });
 
                 //通信実施
                 //アップロード処理
-                final NCMBFile file = new NCMBFile(user_name + fileid + ".jpg", dataByte, acl);
+                final NCMBFile file = new NCMBFile(MainActivity.Companion.getUser_name() + fileid + ".jpg", dataByte, acl);
                 file.saveInBackground(e ->{
                         if (e != null) {
                             //保存失敗
@@ -253,7 +272,6 @@ public class CameraFragment extends Fragment {
                             uploadflg = false;
                             genreid = 0;
                             iv.setImageResource(R.drawable.noimage);
-
                         }
                 });
             }
@@ -303,73 +321,54 @@ public class CameraFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         // TODO Auto-generated method stub
+
         switch (requestCode){
             case REQUEST_CHOOSER:
                 //dataがnullの場合はギャラリーではなくカメラからの取得と判定しカメラのUriを使う
                 uri = (data != null ? data.getData() : cameraUri);
 
                 if(uri == null) {
-                    // 取得失敗
-                    Toast.makeText(getActivity(), "Error.retry.", Toast.LENGTH_LONG).show();
-                    return;
-
+                    if(cameraUri != null){
+                        uri = cameraUri;
+                    } else {
+                        // 取得失敗
+                        Toast.makeText(getActivity(), "Error.retry.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
                 }
                 // ギャラリーへ画像追加
                 //MediaScannerConnection.scanFile(getActivity(), new String[]{uri.getPath()}, new String[]{"image/jpeg"}, null);
                 // 画像を選択
-                Log.d("uri",String.valueOf(uri));
                 //FileスキームのURIに変換する
-                Uri FileUri = Uri.parse("file://"+getPathFromUri(getContext(), uri));
+                Uri FileUri = Uri.parse("file://" + getPathFromUri(getContext(), uri));
+
+                //非同期処理
+                Single.create((SingleOnSubscribe<Uri>) emitter -> emitter.onSuccess(FileUri))
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new DisposableSingleObserver<Uri>(){
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                //画像選択後フィルター選択画面へ遷移
+                                Intent intent = new Intent(getActivity(), ImageUploadActivity.class);
+                                intent.putExtra("picture", MainFragment.changefile(resizeImage(uri)).getAbsolutePath());
+                                //Activityの移動
+                                startActivityForResult(intent, RESULT_IMAGE);
+                                //アップロード許可フラグを立てる
+                                uploadflg = true;
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                e.printStackTrace();
+                            }
+                        });
+                
+                Log.d("uri",String.valueOf(uri));
+
                 Log.d("uri",String.valueOf(FileUri));
                 //Uri convUri = getFileSchemeUri(uri);
-                try {
-                    Bitmap bp = android.provider.MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), FileUri);
-                    int width = bp.getWidth();
-                    int height = bp.getHeight();
 
-                    //画像の向き
-                    ExifInterface exifInterface;
-                    try {
-                        exifInterface = new ExifInterface(FileUri.getPath());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        return;
-                    }
-
-                    int exifR = getExifint(exifInterface, ExifInterface.TAG_ORIENTATION);
-                    int R = 0;
-                    switch(exifR){
-                        case 1:
-                            R=0;
-                            break;
-                        case 3:
-                            R=180;
-                            break;
-                        case 6:
-                            R=90;
-                            break;
-                        case 8:
-                            R=270;
-                            break;
-                        default:
-                            break;
-                    }
-
-                    Matrix matrix = new Matrix();
-                    matrix.postRotate(R);  //角度指定
-
-                    bp = Bitmap.createBitmap(bp, 0, 0, width, height, matrix, true);
-
-                    //画像選択後フィルター選択画面へ遷移
-                    Intent intent = new Intent(getActivity(), ImageUploadActivity.class);
-                    intent.putExtra("picture", MainFragment.changefile(bp).getAbsolutePath());
-                    //Activityの移動
-                    startActivityForResult(intent, RESULT_IMAGE);
-                    //アップロード許可フラグを立てる
-                    uploadflg = true;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
                 break;
             case RESULT_IMAGE :
                 if(resultCode == RESULT_OK) {
@@ -386,8 +385,53 @@ public class CameraFragment extends Fragment {
 
 
     }
+    public Bitmap resizeImage(Uri FileUri) {
+        Bitmap bp = null;
+        //画像の向き
+        ExifInterface exifInterface = null;
+        try {
+            exifInterface = new ExifInterface(FileUri.getPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            bp = android.provider.MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), FileUri);
+            int width = bp.getWidth();
+            int height = bp.getHeight();
 
-    // TODO: Rename method, update argument and hook method into UI event
+
+            int exifR = getExifint(exifInterface, ExifInterface.TAG_ORIENTATION);
+            int R = 0;
+            switch (exifR) {
+                case 1:
+                    R = 0;
+                    break;
+                case 3:
+                    R = 180;
+                    break;
+                case 6:
+                    R = 90;
+                    break;
+                case 8:
+                    R = 270;
+                    break;
+                default:
+                    break;
+            }
+
+            Matrix matrix = new Matrix();
+            matrix.postRotate(R);  //角度指定
+
+            bp = Bitmap.createBitmap(bp, 0, 0, width, height, matrix, true);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+        return bp;
+    }
+
+        // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
@@ -409,10 +453,10 @@ public class CameraFragment extends Fragment {
                 final String type = split[0];
                 if ("primary".equalsIgnoreCase(type)) {
                     return Environment.getExternalStorageDirectory() + "/" + split[1];
-                }else {
+                } else {
                     return "/stroage/" + type +  "/" + split[1];
                 }
-            }else if ("com.android.providers.downloads.documents".equals(
+            } else if ("com.android.providers.downloads.documents".equals(
                     uri.getAuthority())) {// DownloadsProvider
                 final String id = DocumentsContract.getDocumentId(uri);
                 final Uri contentUri = ContentUris.withAppendedId(

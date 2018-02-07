@@ -13,10 +13,10 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DBOpenHelper extends SQLiteOpenHelper {
 
-    public Context m_context;
+    private Context m_context;
     public static final String TAG = "DBOpenHelper";
-    public static final String DB_NAME = "android_sqlite_demo";
-    public static final int DB_VERSION = 1;
+    private static final String DB_NAME = "android_sqlite_demo";
+    private static final int DB_VERSION = 1;
 
     public DBOpenHelper(final Context context) {
         super(context, DB_NAME, null, DB_VERSION);

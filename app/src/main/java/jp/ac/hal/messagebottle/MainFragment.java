@@ -25,6 +25,7 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.nifty.cloud.mb.core.FindCallback;
 import com.nifty.cloud.mb.core.NCMB;
 import com.nifty.cloud.mb.core.NCMBBase;
 import com.nifty.cloud.mb.core.NCMBException;
@@ -62,9 +63,8 @@ public class MainFragment extends Fragment implements
     // TODO: Rename and change types of parameters
     private int mParam1;
     private String mParam2;
-
     private GridView gridView;
-
+    private boolean resultFlg;
     private ProgressDialog mProgressDialog;
     private OnFragmentInteractionListener mListener;
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -135,10 +135,12 @@ public class MainFragment extends Fragment implements
             //一時保存
             Bitmap bp = fileEntity.getDetailImage();
             String filepath = changefile(bp).getAbsolutePath();
-            String _objectId = null;
+
+            String _objectId = fileEntity.getObject_id();
             switch (mParam1){
                 case Userfragment.RECEPTIONCODE :
-                    _objectId = "_object";
+                    //お気に入りしているか確認
+                    resultFlg = CheckFavorite(_objectId);
                     break;
                 case Userfragment.SENDCODE:
                     //自分のメッセージ
@@ -147,8 +149,23 @@ public class MainFragment extends Fragment implements
                 default:
                     break;
             }
-            mainFragmentLisner.OnShowChild(filepath, _objectId);
+            mainFragmentLisner.OnShowChild(filepath, _objectId, resultFlg);
         });
+    }
+
+    private boolean CheckFavorite(String objectId) {
+        resultFlg = false;
+        NCMBQuery<NCMBObject> query = new NCMBQuery<>("Favorite");
+        query.whereEqualTo("FavoriteID", objectId);
+        query.findInBackground((List<NCMBObject> list, NCMBException e) -> {
+            if(e != null){
+                resultFlg = false;
+                //エラー処理
+            }else{
+                resultFlg = true;
+            }
+        });
+        return resultFlg;
     }
 
     @Override
@@ -161,7 +178,7 @@ public class MainFragment extends Fragment implements
     public static File changefile(Bitmap bp){
         //一時保存ファイル名
         String imageName =  "onetime.jpg";
-        File imageFile = new File(MainActivity.getContext().getFilesDir(),imageName);
+        File imageFile = new File(MainActivity.Companion.getContext().getFilesDir(),imageName);
         FileOutputStream out;
         try {
             out = new FileOutputStream(imageFile);
@@ -191,7 +208,7 @@ public class MainFragment extends Fragment implements
         switch (mParam1){
             case Userfragment.RECEPTIONCODE :
                 //全てのメッセージ
-                 filelist = AllLoadList();
+                filelist = AllLoadList();
                 break;
             case Userfragment.SENDCODE:
                 //自分のメッセージ
@@ -230,6 +247,28 @@ public class MainFragment extends Fragment implements
         return filelist;
     }
 
+    public List<FileEntity> MyQuery() {
+        List<FileEntity> filelist = new ArrayList<>();
+        //すべてのデータ取得の場合NCMBObjectServiceを用いる
+        NCMBQuery<NCMBObject> ncmbQuery = new NCMBQuery<> ("File");
+        //ユーザ名と一致するもの
+        ncmbQuery.whereEqualTo("UserName", MainActivity.Companion.getUser_name());
+        NCMBQuery<NCMBObject> query = new NCMBQuery<>("User");
+        query.whereMatchesQuery("subKey", query);
+        query.findInBackground((List<NCMBObject> list, NCMBException e) -> {
+            for(NCMBObject item : list){
+                FileEntity fe = new FileEntity();
+                //画像のパス
+                fe.setFile(imageurl + item.getString("file"));
+                fe.setObject_id(item.getString("objectId"));
+                fe.setFile_genre(item.getString("file_id"));
+                filelist.add(fe);
+            }
+        });
+
+        return filelist;
+    }
+
     //ファイル名取得(検索条件あり)
     public List<FileEntity> QueryLoad(int genre_id) {
         //すべてのデータ取得の場合NCMBObjectServiceを用いる
@@ -242,7 +281,7 @@ public class MainFragment extends Fragment implements
                 //エラー処理
                 Log.e("genreError","noload");
             }else{
-               ncmbObjectList = list;
+                ncmbObjectList = list;
             }
         });
         if(ncmbObjectList != null) {
@@ -273,6 +312,8 @@ public class MainFragment extends Fragment implements
         });
         return result[0];
     }
+
+
 
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
@@ -321,6 +362,6 @@ public class MainFragment extends Fragment implements
         void onFragmentInteraction(Uri uri);
     }
     protected interface MainFragmentLisner{
-        void OnShowChild(String filepath, String Object_id);
+        void OnShowChild(String filepath, String Object_id, boolean flg);
     }
 }

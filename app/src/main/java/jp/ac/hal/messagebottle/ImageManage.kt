@@ -4,9 +4,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.util.Log
+import jp.ac.hal.messagebottle.MainActivity.Companion.view_height
+import jp.ac.hal.messagebottle.MainActivity.Companion.view_width
 
-import jp.ac.hal.messagebottle.MainActivity.view_height
-import jp.ac.hal.messagebottle.MainActivity.view_width
 
 /**
  * Created by muto.masakazu on 2017/12/06.
