@@ -133,8 +133,8 @@ public class MainFragment extends Fragment implements
             GridView gv = (GridView)parent;
             FileEntity fileEntity = (FileEntity)gv.getItemAtPosition(position);
             //一時保存
-            Bitmap bp = fileEntity.getDetailImage();
-            String filepath = changefile(bp).getAbsolutePath();
+            //Bitmap bp = fileEntity.getDetailImage();
+            //String filepath = changefile(bp).getAbsolutePath();
 
             String _objectId = fileEntity.getObject_id();
             switch (mParam1){
@@ -149,7 +149,8 @@ public class MainFragment extends Fragment implements
                 default:
                     break;
             }
-            mainFragmentLisner.OnShowChild(filepath, _objectId, resultFlg);
+            //mainFragmentLisner.OnShowChild(filepath, _objectId, resultFlg);
+            mainFragmentLisner.OnShowChild(fileEntity.getFile(), _objectId, resultFlg);
         });
     }
 
@@ -212,6 +213,7 @@ public class MainFragment extends Fragment implements
                 break;
             case Userfragment.SENDCODE:
                 //自分のメッセージ
+                filelist = QueryLoad();
                 break;
             default:
                 break;
@@ -243,18 +245,19 @@ public class MainFragment extends Fragment implements
             fe.setObject_id(obj.getString("objectId"));
             fe.setFile_genre(obj.getString("file_id"));
             filelist.add(fe);
+            Log.v("NCMBObject", obj.getString("UserName"));
         }
         return filelist;
     }
 
     public List<FileEntity> MyQuery() {
         List<FileEntity> filelist = new ArrayList<>();
-        //すべてのデータ取得の場合NCMBObjectServiceを用いる
+        //Fileクラスのユーザ名
         NCMBQuery<NCMBObject> ncmbQuery = new NCMBQuery<> ("File");
-        //ユーザ名と一致するもの
+        //条件
         ncmbQuery.whereEqualTo("UserName", MainActivity.Companion.getUser_name());
         NCMBQuery<NCMBObject> query = new NCMBQuery<>("User");
-        query.whereMatchesQuery("subKey", query);
+        query.whereMatchesQuery("pointer", ncmbQuery);
         query.findInBackground((List<NCMBObject> list, NCMBException e) -> {
             for(NCMBObject item : list){
                 FileEntity fe = new FileEntity();
@@ -266,36 +269,28 @@ public class MainFragment extends Fragment implements
             }
         });
 
+
         return filelist;
     }
 
     //ファイル名取得(検索条件あり)
-    public List<FileEntity> QueryLoad(int genre_id) {
-        //すべてのデータ取得の場合NCMBObjectServiceを用いる
-        NCMBQuery<NCMBObject> ncmbQuery = new NCMBQuery ("File");
+    public List<FileEntity> QueryLoad() {
         List<FileEntity> filelist = new ArrayList<>();
-        ncmbQuery.whereEqualTo("genre_id", genre_id );
-
-        ncmbQuery.findInBackground((List<NCMBObject> list, NCMBException e) -> {
-            if(e != null){
-                //エラー処理
-                Log.e("genreError","noload");
-            }else{
-                ncmbObjectList = list;
-            }
-        });
-        if(ncmbObjectList != null) {
-            for (NCMBObject obj : ncmbObjectList) {
+        //Fileクラスのユーザ名
+        NCMBQuery<NCMBObject> ncmbQuery = new NCMBQuery<> ("File");
+        //条件
+        ncmbQuery.whereEqualTo("UserName", MainActivity.Companion.getUser_name());
+        ncmbQuery.findInBackground((list, e) -> {
+            for (NCMBObject item : list){
                 FileEntity fe = new FileEntity();
                 //画像のパス
-                fe.setFile(imageurl + obj.getString("file"));
-                fe.setObject_id(obj.getString("objectId"));
-                fe.setFile_genre(obj.getString("file_id"));
-                fe.setFile_genre(LoadGenre(obj.getInt("genre_id")));
-                Log.e("genreError", String.valueOf(obj.getInt("genre_id")));
+                fe.setFile(imageurl + item.getString("file"));
+                fe.setObject_id(item.getString("objectId"));
+                fe.setFile_genre(item.getString("file_id"));
                 filelist.add(fe);
+
             }
-        }
+        });
         return filelist;
     }
 

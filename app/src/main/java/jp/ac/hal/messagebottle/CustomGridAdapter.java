@@ -5,12 +5,15 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+
+import com.squareup.picasso.Picasso;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -49,8 +52,9 @@ public class CustomGridAdapter extends ArrayAdapter<FileEntity>{
         ImageView image;
     }
 
+    @NonNull
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         ViewHolder viewHolder;
 
         if (convertView == null) {
@@ -73,6 +77,11 @@ public class CustomGridAdapter extends ArrayAdapter<FileEntity>{
 
         //View非表示
         viewHolder.image.setVisibility(View.GONE);
+        Picasso.with(context).load(NCMBPath).error(R.drawable.noimage).into(viewHolder.image);
+
+        viewHolder.image.setVisibility(View.VISIBLE);
+
+        /*
         //画像読込
         try{
             viewHolder.image.setTag(object_id);
@@ -82,10 +91,12 @@ public class CustomGridAdapter extends ArrayAdapter<FileEntity>{
             //Bitmap bitmap = ((BitmapDrawable)viewHolder.image.getDrawable()).getBitmap();
             task.setOnCallBack(entity::setDetailImage);
             task.execute(NCMBPath, object_id);
-        } catch(Exception e) {
+        } catch(Exception e){
             viewHolder.image.setImageDrawable(context.getResources().getDrawable(R.drawable.noimage));
             viewHolder.image.setVisibility(View.VISIBLE);
         }
+        */
+
 
         //非同期画像取得
 

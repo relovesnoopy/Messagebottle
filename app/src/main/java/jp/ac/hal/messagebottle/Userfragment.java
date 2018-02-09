@@ -102,10 +102,10 @@ public class Userfragment extends Fragment {
         });
 
         SendMessageBtn.setOnClickListener(v -> {
-            /*Intent intent = new Intent(getActivity(), MainContentsActivity.class);
+            Intent intent = new Intent(getActivity(), MainContentsActivity.class);
 
             intent.putExtra("MESSAGE", SENDCODE);
-            startActivity(intent);*/
+            startActivity(intent);
         });
 
         ReceptionMessageBtn.setOnClickListener(v ->{

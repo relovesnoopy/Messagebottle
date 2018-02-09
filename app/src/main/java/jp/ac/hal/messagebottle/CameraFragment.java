@@ -339,35 +339,32 @@ public class CameraFragment extends Fragment {
                 // ギャラリーへ画像追加
                 //MediaScannerConnection.scanFile(getActivity(), new String[]{uri.getPath()}, new String[]{"image/jpeg"}, null);
                 // 画像を選択
-                //FileスキームのURIに変換する
-                Uri FileUri = Uri.parse("file://" + getPathFromUri(getContext(), uri));
 
-                //非同期処理
-                Single.create((SingleOnSubscribe<Uri>) emitter -> emitter.onSuccess(FileUri))
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new DisposableSingleObserver<Uri>(){
-                            @Override
-                            public void onSuccess(Uri uri) {
-                                //画像選択後フィルター選択画面へ遷移
-                                Intent intent = new Intent(getActivity(), ImageUploadActivity.class);
-                                intent.putExtra("picture", MainFragment.changefile(resizeImage(uri)).getAbsolutePath());
-                                //Activityの移動
-                                startActivityForResult(intent, RESULT_IMAGE);
-                                //アップロード許可フラグを立てる
-                                uploadflg = true;
-                            }
+                if(new File(uri.toString()).exists()){
+                    //FileスキームのURIに変換する
+                    Uri FileUri = Uri.parse("file://" + getPathFromUri(getContext(), uri));
+                    //非同期処理
+                    Single.create((SingleOnSubscribe<Uri>) emitter -> emitter.onSuccess(FileUri))
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(new DisposableSingleObserver<Uri>(){
+                                @Override
+                                public void onSuccess(Uri uri) {
+                                    //画像選択後フィルター選択画面へ遷移
+                                    Intent intent = new Intent(getActivity(), ImageUploadActivity.class);
+                                    intent.putExtra("picture", MainFragment.changefile(resizeImage(uri)).getAbsolutePath());
+                                    //Activityの移動
+                                    startActivityForResult(intent, RESULT_IMAGE);
+                                    //アップロード許可フラグを立てる
+                                    uploadflg = true;
+                                }
+                                @Override
+                                public void onError(Throwable e) {
+                                    e.printStackTrace();
 
-                            @Override
-                            public void onError(Throwable e) {
-                                e.printStackTrace();
-                            }
-                        });
-                
-                Log.d("uri",String.valueOf(uri));
-
-                Log.d("uri",String.valueOf(FileUri));
-                //Uri convUri = getFileSchemeUri(uri);
+                                }
+                            });
+                }
 
                 break;
             case RESULT_IMAGE :
@@ -383,8 +380,8 @@ public class CameraFragment extends Fragment {
         }
         super.onActivityResult(requestCode, resultCode, data);
 
-
     }
+
     public Bitmap resizeImage(Uri FileUri) {
         Bitmap bp = null;
         //画像の向き
@@ -431,7 +428,7 @@ public class CameraFragment extends Fragment {
         return bp;
     }
 
-        // TODO: Rename method, update argument and hook method into UI event
+    // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
@@ -475,9 +472,9 @@ public class CameraFragment extends Fragment {
                 };
                 return getDataColumn(context, contentUri, selection, selectionArgs);
             }
-        }else if ("content".equalsIgnoreCase(uri.getScheme())) {//MediaStore
+        } else if ("content".equalsIgnoreCase(uri.getScheme())) {//MediaStore
             return getDataColumn(context, uri, null, null);
-        }else if ("file".equalsIgnoreCase(uri.getScheme())) {// File
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) {// File
             return uri.getPath();
         }
         return null;
@@ -485,12 +482,9 @@ public class CameraFragment extends Fragment {
 
     public static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
         Cursor cursor = null;
-        final String[] projection = {
-                MediaStore.Files.FileColumns.DATA
-        };
+        final String[] projection = { MediaStore.Files.FileColumns.DATA };
         try {
-            cursor = context.getContentResolver().query(
-                    uri, projection, selection, selectionArgs, null);
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
             if (cursor != null && cursor.moveToFirst()) {
                 final int cindex = cursor.getColumnIndexOrThrow(projection[0]);
                 return cursor.getString(cindex);
@@ -509,12 +503,12 @@ public class CameraFragment extends Fragment {
      * @return 変換後のURI     例) file:///storage/sdcard/test1.jpg
      */
     private Uri getFileSchemeUri(Uri uri){
-        Uri fileSchemeUri = uri;
         String path = getPath(uri);
-        fileSchemeUri = Uri.fromFile(new File(path));
+        Uri fileSchemeUri = fileSchemeUri = Uri.fromFile(new File(path));
         Log.d("FileUri", String.valueOf(fileSchemeUri));
         return fileSchemeUri;
     }
+
     private String getPath(Uri uri) {
         String path = uri.toString();
         if (path.matches("^file:.*")) {

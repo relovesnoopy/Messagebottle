@@ -13,6 +13,7 @@ import android.widget.Button
 import android.widget.ImageView
 import com.nifty.cloud.mb.core.NCMBObject
 import com.nifty.cloud.mb.core.NCMBQuery
+import com.squareup.picasso.Picasso
 
 
 /**
@@ -46,7 +47,8 @@ class ChildMainFragment : Fragment() {
         // Inflate the layout for this fragment
         val view = inflater!!.inflate(R.layout.fragment_child_main, container, false)
         val imageView = view.findViewById(R.id.ChildImage) as ImageView
-        imageView.setImageBitmap(ImageManage().scaleBitmap(mParam1!!))
+        //imageView.setImageBitmap(ImageManage().scaleBitmap(mParam1!!))
+        Picasso.with(context).load(mParam1!!).placeholder(R.drawable.noimage).error(R.drawable.noimage).into(imageView)
         imageView.setOnClickListener { mListener!!.onCloseChildMain() }
 
         val deleteBtn = view.findViewById(R.id.DeleteDispBtn) as Button
