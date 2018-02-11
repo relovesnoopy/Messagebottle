@@ -214,6 +214,7 @@ public class MainFragment extends Fragment implements
             case Userfragment.SENDCODE:
                 //自分のメッセージ
                 filelist = QueryLoad();
+                //filelist = MyQuery();
                 break;
             default:
                 break;

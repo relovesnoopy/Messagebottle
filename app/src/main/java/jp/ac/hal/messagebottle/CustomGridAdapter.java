@@ -47,53 +47,24 @@ public class CustomGridAdapter extends ArrayAdapter<FileEntity>{
         mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
-    // GridView一コマの内部の参照を保持する
-    /*
-    static class ViewHolder {
-        ImageView image;
-    }
-    */
-
     @NonNull
     @Override
     public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-        //ViewHolder viewHolder;
         View view;
-
         if (convertView == null) {
             view = mInflater.inflate(RESOURCE_ID, parent, false);
-            //grid内のview生成
-            //convertView = mInflater.inflate(RESOURCE_ID, null);
-            // GridView一コマの中のそれぞれのViewの参照を保持するクラスを生成
-            //viewHolder = new ViewHolder();
-            //viewHolder.image = (ImageView)convertView.findViewById(R.id.gridimageView);
-
-            //convertView.setTag(viewHolder);
-
-        }else {
+        } else {
             view = convertView;
-            // TagからGridViewの1コマの中に設定されたViewの参照を取得
-            //viewHolder = (ViewHolder)convertView.getTag();
         }
         ImageView imageView = (ImageView) view.findViewById(R.id.gridimageView);
 
         // リストビューに表示する要素を取得
         FileEntity entity = mItems.get(position);
         String NCMBPath = entity.getFile();
-        //String object_id = entity.getObject_id();
-        //viewHolder.image.setTag(NCMBPath);
-
-        //View非表示
-        //viewHolder.image.setVisibility(View.GONE);
-        //Picasso.with(context).load(NCMBPath).error(R.drawable.noimage).into(viewHolder.image);
-        Picasso.with(context).load(NCMBPath).error(R.drawable.noimage).into(imageView);
-
-        //viewHolder.image.setVisibility(View.VISIBLE);
-        //return convertView;
+        Picasso.with(context).load(NCMBPath).placeholder(R.drawable.miniload).error(R.drawable.noimage).into(imageView);
+        Picasso.with(context).setIndicatorsEnabled(true);
         return  view;
     }
-
-
 
 }
 

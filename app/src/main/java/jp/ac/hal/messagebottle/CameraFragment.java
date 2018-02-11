@@ -144,7 +144,7 @@ public class CameraFragment extends Fragment {
         iv = (ImageView)view.findViewById(R.id.imageView);
 
         choosebtn.setOnClickListener(v -> {
-            /*
+
             //カメラの起動Intentの用意
             if (Build.VERSION.SDK_INT >= 23) {
                 checkPermission();
@@ -153,7 +153,7 @@ public class CameraFragment extends Fragment {
                 //Intentを返す
                 intentCamera = cameraIntent();
             }
-            */
+
             intentCamera = cameraIntent();
 
             // ギャラリー用のIntent作成
@@ -308,8 +308,6 @@ public class CameraFragment extends Fragment {
     private void requestLocationPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, REQUEST_PERMISSION);
-
-
         } else {
             Toast.makeText(getActivity(), "カメラ機能が無効です", Toast.LENGTH_SHORT).show();
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, REQUEST_PERMISSION);
@@ -340,31 +338,33 @@ public class CameraFragment extends Fragment {
                 //MediaScannerConnection.scanFile(getActivity(), new String[]{uri.getPath()}, new String[]{"image/jpeg"}, null);
                 // 画像を選択
 
-                if(new File(uri.toString()).exists()){
-                    //FileスキームのURIに変換する
-                    Uri FileUri = Uri.parse("file://" + getPathFromUri(getContext(), uri));
-                    //非同期処理
-                    Single.create((SingleOnSubscribe<Uri>) emitter -> emitter.onSuccess(FileUri))
-                            .subscribeOn(Schedulers.io())
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(new DisposableSingleObserver<Uri>(){
-                                @Override
-                                public void onSuccess(Uri uri) {
-                                    //画像選択後フィルター選択画面へ遷移
-                                    Intent intent = new Intent(getActivity(), ImageUploadActivity.class);
-                                    intent.putExtra("picture", MainFragment.changefile(resizeImage(uri)).getAbsolutePath());
-                                    //Activityの移動
-                                    startActivityForResult(intent, RESULT_IMAGE);
-                                    //アップロード許可フラグを立てる
-                                    uploadflg = true;
-                                }
-                                @Override
-                                public void onError(Throwable e) {
-                                    e.printStackTrace();
 
-                                }
-                            });
-                }
+                //FileスキームのURIに変換する
+                Uri FileUri = Uri.parse("file://" + getPathFromUri(getContext(), uri));
+                //非同期処理
+                boolean isuri = new File(uri.toString()).exists();
+                boolean isfileuri = new File(FileUri.toString()).exists();
+
+                Single.create((SingleOnSubscribe<Uri>) emitter -> emitter.onSuccess(FileUri))
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new DisposableSingleObserver<Uri>(){
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                //画像選択後フィルター選択画面へ遷移
+                                Intent intent = new Intent(getActivity(), ImageUploadActivity.class);
+                                intent.putExtra("picture", MainFragment.changefile(resizeImage(uri)).getAbsolutePath());
+                                //Activityの移動
+                                startActivityForResult(intent, RESULT_IMAGE);
+                                //アップロード許可フラグを立てる
+                                uploadflg = true;
+                            }
+                            @Override
+                            public void onError(Throwable e) {
+                                e.printStackTrace();
+                            }
+                        });
+
 
                 break;
             case RESULT_IMAGE :
