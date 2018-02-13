@@ -280,7 +280,8 @@ public class MainFragment extends Fragment implements
         //Fileクラスのユーザ名
         NCMBQuery<NCMBObject> ncmbQuery = new NCMBQuery<> ("File");
         //条件
-        ncmbQuery.whereEqualTo("UserName", MainActivity.Companion.getUser_name());
+        String usename =MainActivity.Companion.getUser_name();
+        ncmbQuery.whereEqualTo("UserName", "testUser");
         ncmbQuery.findInBackground((list, e) -> {
             for (NCMBObject item : list){
                 FileEntity fe = new FileEntity();
