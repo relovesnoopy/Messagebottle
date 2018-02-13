@@ -33,8 +33,12 @@ public class Userfragment extends Fragment {
     private Context context;
     private Button loginbtn;
     private Button signupbtn;
-    private Button listMymess;
+    private Button SendMessageBtn;
+    private Button ReceptionMessageBtn;
     private static final int USERCODE = 500;
+    public static final int RECEPTIONCODE = 1000;
+    public static final int SENDCODE = 1100;
+
 
     private OnFragmentInteractionListener mListener;
 
@@ -77,7 +81,8 @@ public class Userfragment extends Fragment {
         this.context = rootView.getContext();
         loginbtn = (Button)rootView.findViewById(R.id.login);
         signupbtn = (Button)rootView.findViewById(R.id.sinup);
-        listMymess = (Button)rootView.findViewById(R.id.send_message);
+        SendMessageBtn = (Button)rootView.findViewById(R.id.Send_message);
+        ReceptionMessageBtn = (Button)rootView.findViewById(R.id.Reception_message);
         return rootView;
     }
 
@@ -86,12 +91,27 @@ public class Userfragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         //ログイン画面遷移
-        loginbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        loginbtn.setOnClickListener(v -> {
                 Intent intent = new Intent(getActivity(), Login.class);
                 startActivityForResult(intent, USERCODE);
-            }
+        });
+        //新規登録
+        signupbtn.setOnClickListener(v ->{
+            Intent intent = new Intent(getActivity(), SignupActivity.class);
+            startActivityForResult(intent, USERCODE);
+        });
+
+        SendMessageBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), MainContentsActivity.class);
+
+            intent.putExtra("MESSAGE", SENDCODE);
+            startActivity(intent);
+        });
+
+        ReceptionMessageBtn.setOnClickListener(v ->{
+            Intent intent = new Intent(getActivity(), MainContentsActivity.class);
+            intent.putExtra("MESSAGE", RECEPTIONCODE);
+            startActivity(intent);
         });
 
     }

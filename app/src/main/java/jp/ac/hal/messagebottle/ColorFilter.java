@@ -2,11 +2,8 @@ package jp.ac.hal.messagebottle;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import jp.co.cyberagent.android.gpuimage.GPUImage;
 import jp.co.cyberagent.android.gpuimage.GPUImageEmbossFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageExposureFilter;
@@ -14,19 +11,16 @@ import jp.co.cyberagent.android.gpuimage.GPUImageMonochromeFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImagePosterizeFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageSepiaFilter;
 
-import static jp.ac.hal.messagebottle.MainActivity.getContext;
-
 /**
  * Created by muto.masakazu on 2017/11/26.
  */
 
-public class ColorFilter {
-    private Context context;
-    private List<ImageEntity> entityList;
+class ColorFilter {
     private GPUImage gpuImage;
-    public ColorFilter(){
-        this.context = getContext();
-        gpuImage = new GPUImage(this.context);
+    ColorFilter(){
+        Context context = MainActivity.Companion.getContext();
+        assert context != null;
+        gpuImage = new GPUImage(context);
     }
     private ImageEntity None_filter(Bitmap bp){
         ImageEntity entity = new ImageEntity();
@@ -70,9 +64,9 @@ public class ColorFilter {
         return entity;
     }
 
-    public List<ImageEntity> getFilterList(Bitmap bp){
+    List<ImageEntity> getFilterList(Bitmap bp){
         gpuImage.setImage(bp);
-        entityList = new ArrayList<>();
+        List<ImageEntity> entityList = new ArrayList<>();
         entityList.add(this.None_filter(bp));
         entityList.add(this.Sepia_filter(gpuImage));
         entityList.add(this.Mono_filter(gpuImage));

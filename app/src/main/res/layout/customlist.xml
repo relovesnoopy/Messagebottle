@@ -11,7 +11,7 @@
     <TextView
         android:id="@+id/filter_name"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="20dp"
         android:layout_margin="0dp"
         android:gravity="center_vertical|center_horizontal"
         android:maxLines="1"
@@ -21,7 +21,7 @@
     <ImageView
         android:id="@+id/thumbnail"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_height="150dp"
         android:layout_marginTop="0dp"
         android:layout_weight="0.02"
         android:paddingEnd="5dp" />

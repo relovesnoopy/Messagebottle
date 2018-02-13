@@ -40,12 +40,13 @@ public class ImageUploadActivity extends AppCompatActivity {
             final ImageView imageView = (ImageView)findViewById(R.id.select_image);
             imageView.setImageBitmap(bp);
             //タグ取得
+
             //Spinnerにセット
             ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item);
             //Spinnerのインスタンス化
             final Spinner sp = (Spinner)findViewById(R.id.spinner);
             arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-
+/*
             NCMBObjectService objectService = (NCMBObjectService) NCMB.factory(NCMB.ServiceType.OBJECT);
             try {
                 List<NCMBObject> objectList = objectService.searchObject("Genre", null);
@@ -60,6 +61,7 @@ public class ImageUploadActivity extends AppCompatActivity {
                 e.printStackTrace();
                 return;
             }
+*/
 
             //フィルター一覧をアダプターにセット
             ColorFilter colorFilter = new ColorFilter();
@@ -70,27 +72,18 @@ public class ImageUploadActivity extends AppCompatActivity {
             recyclerView.setLayoutManager(manager);
             recyclerView.setAdapter(adapter);
 
-            adapter.setOnItemClickListener(new CasarealRecycleViewAdapter.OnItemClickListener() {
-                @Override
-                public void onClick(View view, ImageEntity position) {
-                    imageView.setImageBitmap(position.getThumbnail());
-                }
-            });
+            adapter.setOnItemClickListener((view, position) -> imageView.setImageBitmap(position.getThumbnail()));
             Button btn = (Button) findViewById(R.id.nextPage);
             final Intent intent = new Intent();
 
-            btn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    //画像とジャンルをセット
-                    intent.putExtra("image", MainFragment.changefile(((BitmapDrawable)imageView.getDrawable()).getBitmap()).getAbsolutePath());
-                    //intent.putExtra("genre", (String)sp.getSelectedItem());
-                    intent.putExtra("genre", sp.getSelectedItemPosition());
 
-
-                    setResult(RESULT_OK, intent);
-                    finish();
-                }
+            btn.setOnClickListener(v -> {
+                //画像とジャンルをセット
+                intent.putExtra("image", MainFragment.changefile(((BitmapDrawable)imageView.getDrawable()).getBitmap()).getAbsolutePath());
+                //intent.putExtra("genre", (String)sp.getSelectedItem());
+                intent.putExtra("genre", sp.getSelectedItemPosition());
+                setResult(RESULT_OK, intent);
+                finish();
             });
 
 

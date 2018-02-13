@@ -3,23 +3,24 @@ package jp.ac.hal.messagebottle;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.ExifInterface;
-import android.media.MediaScannerConnection;
+
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -29,38 +30,38 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageButton;
+
 import android.widget.ImageView;
-import android.widget.ListView;
+
 import android.widget.Toast;
 
-import com.nifty.cloud.mb.core.DoneCallback;
-import com.nifty.cloud.mb.core.FetchFileCallback;
-import com.nifty.cloud.mb.core.FindCallback;
 import com.nifty.cloud.mb.core.NCMBAcl;
+
 import com.nifty.cloud.mb.core.NCMBException;
 import com.nifty.cloud.mb.core.NCMBFile;
 import com.nifty.cloud.mb.core.NCMBObject;
-import com.nifty.cloud.mb.core.NCMBQuery;
+
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
-import jp.co.cyberagent.android.gpuimage.GPUImage;
-import jp.co.cyberagent.android.gpuimage.GPUImageDilationFilter;
-import jp.co.cyberagent.android.gpuimage.GPUImageEmbossFilter;
-import jp.co.cyberagent.android.gpuimage.GPUImageSepiaFilter;
-import jp.co.cyberagent.android.gpuimage.GPUImageToonFilter;
+
+import io.reactivex.Completable;
+import io.reactivex.CompletableEmitter;
+import io.reactivex.CompletableOnSubscribe;
+import io.reactivex.Single;
+import io.reactivex.SingleOnSubscribe;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.observers.DisposableCompletableObserver;
+import io.reactivex.observers.DisposableSingleObserver;
+import io.reactivex.schedulers.Schedulers;
 
 import static android.app.Activity.RESULT_OK;
-import static jp.ac.hal.messagebottle.MainActivity.getContext;
-import static jp.ac.hal.messagebottle.MainActivity.user_name;
+import static android.content.ContentValues.TAG;
+
+
 
 
 /**
@@ -82,8 +83,9 @@ public class CameraFragment extends Fragment {
     private String mParam2;
 
     private static final int REQUEST_CHOOSER = 1000;
-    private static final  int REQUEST_PERMISSION = 2000;
-    private static final  int RESULT_IMAGE = 3000;
+    private static final int REQUEST_PERMISSION = 2000;
+    private static final int REQUEST_CODE = 2500;
+    private static final int RESULT_IMAGE = 3000;
     private OnFragmentInteractionListener mListener;
     private FloatingActionButton choosebtn;
     private Button uploadbtn;
@@ -141,136 +143,137 @@ public class CameraFragment extends Fragment {
         //表示用ImageViewインスタンス化
         iv = (ImageView)view.findViewById(R.id.imageView);
 
-        choosebtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //カメラの起動Intentの用意
-                if (Build.VERSION.SDK_INT >= 23) {
-                    checkPermission();
-                }
-                else {
-                    //Intentを返す
-                    intentCamera = cameraIntent();
-                }
+        choosebtn.setOnClickListener(v -> {
 
-                // ギャラリー用のIntent作成
-                Intent intentGallery;
-                if (Build.VERSION.SDK_INT < 19) {
-                    intentGallery = new Intent(Intent.ACTION_GET_CONTENT);
-                    intentGallery.setType("image/*");
-                } else {
-                    intentGallery = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                    intentGallery.addCategory(Intent.CATEGORY_OPENABLE);
-                    intentGallery.setType("image/*");
-                }
-
-                //ChooserにGallaryのIntentとCameraのIntentを登録
-                Intent intent = Intent.createChooser(intentGallery, "画像の選択");
-                if(intentCamera != null){
-                    intent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {intentCamera});
-                }
-                startActivityForResult(intent, REQUEST_CHOOSER);
+            //カメラの起動Intentの用意
+            if (Build.VERSION.SDK_INT >= 23) {
+                checkPermission();
             }
+            else {
+                //Intentを返す
+                intentCamera = cameraIntent();
+            }
+
+            intentCamera = cameraIntent();
+
+            // ギャラリー用のIntent作成
+            Intent intentGallery;
+            if (Build.VERSION.SDK_INT < 19) {
+                intentGallery = new Intent(Intent.ACTION_GET_CONTENT);
+                intentGallery.setType("image/*");
+            } else {
+                intentGallery = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intentGallery.addCategory(Intent.CATEGORY_OPENABLE);
+                //intentGallery = new Intent(Intent.ACTION_GET_CONTENT);
+               // intentGallery.setType("image/*");
+                intentGallery.setType("*/*");
+            }
+
+            //ChooserにGallaryのIntentとCameraのIntentを登録
+            Intent intent = Intent.createChooser(intentGallery, "画像の選択");
+            if(intentCamera != null){
+                intent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {intentCamera});
+            }
+            startActivityForResult(intent, REQUEST_CHOOSER);
         });
 
-        uploadbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(!uploadflg){
-                    Toast.makeText(getActivity(), "画像が選択されていません", Toast.LENGTH_LONG).show();
-                } else {
-                    //アップロード進捗状況表示
-                    mProgressDialog = new ProgressDialog(getActivity());
-                    mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-                    mProgressDialog.setMessage("アップロード中です...");
-                    mProgressDialog.setCancelable(true);
-                    mProgressDialog.show();
-                    Bitmap bp = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+        uploadbtn.setOnClickListener((View v) -> {
+            if(!uploadflg){
+                Toast.makeText(getActivity(), "画像が選択されていません", Toast.LENGTH_LONG).show();
+            } else {
+                //アップロード進捗状況表示
+                mProgressDialog = new ProgressDialog(getActivity());
+                mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                mProgressDialog.setMessage("アップロード中です...");
+                mProgressDialog.setCancelable(true);
+                mProgressDialog.show();
+                Bitmap bp = ((BitmapDrawable) iv.getDrawable()).getBitmap();
 
-                    //ファイルのアップロード
-                    ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-                    bp.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayStream);
-                    byte[] dataByte = byteArrayStream.toByteArray();
+                //ファイルのアップロード
+                ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+                bp.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayStream);
+                byte[] dataByte = byteArrayStream.toByteArray();
 
-                    //読み込み 書き込み 許可
-                    NCMBAcl acl = new NCMBAcl();
-                    acl.setPublicReadAccess(true);
-                    acl.setPublicWriteAccess(true);
+                //読み込み 書き込み 許可
+                NCMBAcl acl = new NCMBAcl();
+                acl.setPublicReadAccess(true);
+                acl.setPublicWriteAccess(true);
 
-                    //データベース取得,データベース接続
-                    DBOpenHelper dbh = new DBOpenHelper(getActivity());
-                    SQLiteDatabase db = dbh.getWritableDatabase();
-                    // 抽出する列名(フィールド名)をString型の配列で記述する
-                    String[] col = {"_id", "filenum"};
+                //データベース取得,データベース接続
+                DBOpenHelper dbh = new DBOpenHelper(getActivity());
+                SQLiteDatabase db = dbh.getWritableDatabase();
+                // 抽出する列名(フィールド名)をString型の配列で記述する
+                String[] col = {"_id", "filenum"};
 
-                    // SQLの実行
-                    Cursor c = db.query("userfile", col, null, null, null, null, null);
-                    // カーソルを先頭データへ
-                    boolean b = c.moveToFirst();
-                    int fileid = 0;
-                    while (b) {
-                        int f_num = c.getInt(c.getColumnIndex("filenum"));
-                        //if (fileid < kari) {
-                        fileid = f_num;
-                        // }
-                        // 次のデータへ
-                        b = c.moveToNext();
-                    }
-                    fileid++;
-                    //データベース追加更新
-                    ContentValues values = new ContentValues();
-                    values.put("filenum", 0 + fileid);
-                    db.insert("userfile", null, values);
-
-                    //NCMBデータストア書き込み
-                    NCMBObject fileObj = new NCMBObject("File");
-                    //ファイル名:ユーザ名 + fileid.jpg
-                    fileObj.put("file", user_name + fileid + ".jpg");
-                    fileObj.put("file_id", fileid);
-                    fileObj.put("genre_id", genreid);
-                    fileObj.saveInBackground(new DoneCallback() {
-                        @Override
-                        public void done(NCMBException e) {
-                            if (e != null) {
-                                Toast.makeText(getActivity(), "送信に失敗しました", Toast.LENGTH_LONG).show();
-                                return;
-                            }
-                            // update all messages
-                        }
-                    });
-
-                    //通信実施
-                    //アップロード処理
-                    final NCMBFile file = new NCMBFile(user_name + fileid + ".jpg", dataByte, acl);
-                    file.saveInBackground(new DoneCallback() {
-                        @Override
-                        public void done(NCMBException e) {
-                            if (e != null) {
-                                //保存失敗
-                                mProgressDialog.dismiss();
-                                new AlertDialog.Builder(getActivity())
-                                        .setTitle("Error")
-                                        .setMessage("アップロードエラー:" + e.getMessage())
-                                        .setPositiveButton("OK", null)
-                                        .show();
-                            } else {
-                                //アップロード通知
-                                //画像初期化
-                                mProgressDialog.dismiss();
-                                new AlertDialog.Builder(getActivity()).setTitle("Up Load")
-                                        .setMessage("アップロード完了")
-                                        .setPositiveButton("OK", null)
-                                        .show();
-                                //初期化
-                                uploadflg = false;
-                                genreid = 0;
-                                iv.setImageResource(R.drawable.noimage);
-
-                            }
-                        }
-                    });
+                // SQLの実行
+                Cursor c = db.query("userfile", col, null, null, null, null, null);
+                // カーソルを先頭データへ
+                boolean b = c.moveToFirst();
+                int fileid = 0;
+                while (b) {
+                    //if (fileid < kari) {
+                    fileid = c.getInt(c.getColumnIndex("filenum"));
+                    // }
+                    // 次のデータへ
+                    b = c.moveToNext();
                 }
+                fileid++;
+                //データベース追加更新
+                ContentValues values = new ContentValues();
+                values.put("filenum", fileid);
+                db.insert("userfile", null, values);
 
+                //NCMBデータストア書き込み
+                NCMBObject fileObj = new NCMBObject("File");
+                //ファイル名:ユーザ名 + fileid.jpg
+                String UserName = MainActivity.Companion.getUser_name();
+                fileObj.put("file", UserName + fileid + ".jpg");
+                fileObj.put("file_id", fileid);
+                fileObj.put("genre_id", genreid);
+                fileObj.put("UserName", UserName);
+                try {
+                    fileObj.save();
+                } catch (NCMBException e) {
+                    e.printStackTrace();
+                }
+                NCMBObject userObj = new NCMBObject("User");
+                userObj.put("UserName", UserName);
+                userObj.put("pointer", fileObj);
+                userObj.saveInBackground( e -> {
+                    if (e != null) {
+                        // 取得に失敗した場合の処理
+                        Log.e("NCMB_ERROR","Nopointer");
+                    } else{
+                        // 取得に成功した場合の処理
+                    }
+                });
+
+                //通信実施
+                //アップロード処理
+                final NCMBFile file = new NCMBFile(MainActivity.Companion.getUser_name() + fileid + ".jpg", dataByte, acl);
+                file.saveInBackground(e ->{
+                        if (e != null) {
+                            //保存失敗
+                            mProgressDialog.dismiss();
+                            new AlertDialog.Builder(getActivity())
+                                    .setTitle("Error")
+                                    .setMessage("アップロードエラー:" + e.getMessage())
+                                    .setPositiveButton("OK", null)
+                                    .show();
+                        } else {
+                            //アップロード通知
+                            //画像初期化
+                            mProgressDialog.dismiss();
+                            new AlertDialog.Builder(getActivity()).setTitle("Up Load")
+                                    .setMessage("アップロード完了")
+                                    .setPositiveButton("OK", null)
+                                    .show();
+                            //初期化
+                            uploadflg = false;
+                            genreid = 0;
+                            iv.setImageResource(R.drawable.noimage);
+                        }
+                });
             }
         });
     }
@@ -294,7 +297,7 @@ public class CameraFragment extends Fragment {
     // 許可チェック
     private void checkPermission(){
         // 既に許可している
-        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)== PackageManager.PERMISSION_GRANTED){
+        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED ){
             cameraIntent();
         } else{
             //拒否している場合
@@ -304,11 +307,11 @@ public class CameraFragment extends Fragment {
     // 許可を求める
     private void requestLocationPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
-
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, REQUEST_PERMISSION);
         } else {
             Toast.makeText(getActivity(), "カメラ機能が無効です", Toast.LENGTH_SHORT).show();
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,}, REQUEST_PERMISSION);
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, REQUEST_PERMISSION);
+            //requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CODE);
 
         }
     }
@@ -316,66 +319,53 @@ public class CameraFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         // TODO Auto-generated method stub
+
         switch (requestCode){
             case REQUEST_CHOOSER:
                 //dataがnullの場合はギャラリーではなくカメラからの取得と判定しカメラのUriを使う
                 uri = (data != null ? data.getData() : cameraUri);
 
                 if(uri == null) {
-                    // 取得失敗
-                    Toast.makeText(getActivity(), "Error.retry.", Toast.LENGTH_LONG).show();
-                    return;
-
+                    if(cameraUri != null){
+                        uri = cameraUri;
+                    } else {
+                        // 取得失敗
+                        Toast.makeText(getActivity(), "Error.retry.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
                 }
                 // ギャラリーへ画像追加
                 //MediaScannerConnection.scanFile(getActivity(), new String[]{uri.getPath()}, new String[]{"image/jpeg"}, null);
                 // 画像を選択
-                try {
-                    Bitmap bp = android.provider.MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
-                    int width = bp.getWidth();
-                    int height = bp.getHeight();
 
-                    ExifInterface exifInterface;
 
-                    try {
-                        exifInterface = new ExifInterface(uri.getPath());
-                    } catch (IOException e) {
-                        return;
-                    }
+                //FileスキームのURIに変換する
+                Uri FileUri = Uri.parse("file://" + getPathFromUri(getContext(), uri));
+                //非同期処理
+                boolean isuri = new File(uri.toString()).exists();
+                boolean isfileuri = new File(FileUri.toString()).exists();
 
-                    int exifR = getExifint(exifInterface, ExifInterface.TAG_ORIENTATION);
-                    int R = 0;
+                Single.create((SingleOnSubscribe<Uri>) emitter -> emitter.onSuccess(FileUri))
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new DisposableSingleObserver<Uri>(){
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                //画像選択後フィルター選択画面へ遷移
+                                Intent intent = new Intent(getActivity(), ImageUploadActivity.class);
+                                intent.putExtra("picture", MainFragment.changefile(resizeImage(uri)).getAbsolutePath());
+                                //Activityの移動
+                                startActivityForResult(intent, RESULT_IMAGE);
+                                //アップロード許可フラグを立てる
+                                uploadflg = true;
+                            }
+                            @Override
+                            public void onError(Throwable e) {
+                                e.printStackTrace();
+                            }
+                        });
 
-                    switch(exifR){
-                        case 6:
-                            R=90;
-                            break;
-                        case 1:
-                            R=0;
-                            break;
-                        case 8:
-                            R=270;
-                            break;
-                        case 3:
-                            R=180;
-                            break;
-                    }
 
-                    Matrix matrix = new Matrix();
-                    matrix.postRotate(R);  //角度指定
-
-                    bp = Bitmap.createBitmap(bp, 0, 0, width, height, matrix, true);
-
-                    //画像選択後フィルター選択画面へ遷移
-                    Intent intent = new Intent(getActivity(), ImageUploadActivity.class);
-                    intent.putExtra("picture", MainFragment.changefile(bp).getAbsolutePath());
-                    //Activityの移動
-                    startActivityForResult(intent, RESULT_IMAGE);
-                    //アップロード許可フラグを立てる
-                    uploadflg = true;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
                 break;
             case RESULT_IMAGE :
                 if(resultCode == RESULT_OK) {
@@ -390,7 +380,52 @@ public class CameraFragment extends Fragment {
         }
         super.onActivityResult(requestCode, resultCode, data);
 
+    }
 
+    public Bitmap resizeImage(Uri FileUri) {
+        Bitmap bp = null;
+        //画像の向き
+        ExifInterface exifInterface = null;
+        try {
+            exifInterface = new ExifInterface(FileUri.getPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            bp = android.provider.MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), FileUri);
+            int width = bp.getWidth();
+            int height = bp.getHeight();
+
+
+            int exifR = getExifint(exifInterface, ExifInterface.TAG_ORIENTATION);
+            int R = 0;
+            switch (exifR) {
+                case 1:
+                    R = 0;
+                    break;
+                case 3:
+                    R = 180;
+                    break;
+                case 6:
+                    R = 90;
+                    break;
+                case 8:
+                    R = 270;
+                    break;
+                default:
+                    break;
+            }
+
+            Matrix matrix = new Matrix();
+            matrix.postRotate(R);  //角度指定
+
+            bp = Bitmap.createBitmap(bp, 0, 0, width, height, matrix, true);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+        return bp;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -399,8 +434,100 @@ public class CameraFragment extends Fragment {
             mListener.onFragmentInteraction(uri);
         }
     }
-    private int getExifint(ExifInterface ei,String tag) {
+    private int getExifint(ExifInterface ei, String tag) {
         return  Integer.parseInt(ei.getAttribute(tag));
+    }
+
+    public String getPathFromUri(final Context context, final Uri uri) {
+        boolean isAfterKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+        // DocumentProvider
+        Log.e(TAG,"uri:" + uri.getAuthority());
+        if (isAfterKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+            if ("com.android.externalstorage.documents".equals(
+                    uri.getAuthority())) {// ExternalStorageProvider
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+                if ("primary".equalsIgnoreCase(type)) {
+                    return Environment.getExternalStorageDirectory() + "/" + split[1];
+                } else {
+                    return "/stroage/" + type +  "/" + split[1];
+                }
+            } else if ("com.android.providers.downloads.documents".equals(
+                    uri.getAuthority())) {// DownloadsProvider
+                final String id = DocumentsContract.getDocumentId(uri);
+                final Uri contentUri = ContentUris.withAppendedId(
+                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+                return getDataColumn(context, contentUri, null, null);
+            }else if ("com.android.providers.media.documents".equals(
+                    uri.getAuthority())) {// MediaProvider
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+                Uri contentUri = null;
+                contentUri = MediaStore.Files.getContentUri("external");
+                final String selection = "_id=?";
+                final String[] selectionArgs = new String[] {
+                        split[1]
+                };
+                return getDataColumn(context, contentUri, selection, selectionArgs);
+            }
+        } else if ("content".equalsIgnoreCase(uri.getScheme())) {//MediaStore
+            return getDataColumn(context, uri, null, null);
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) {// File
+            return uri.getPath();
+        }
+        return null;
+    }
+
+    public static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
+        Cursor cursor = null;
+        final String[] projection = { MediaStore.Files.FileColumns.DATA };
+        try {
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                final int cindex = cursor.getColumnIndexOrThrow(projection[0]);
+                return cursor.getString(cindex);
+            }
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return null;
+    }
+
+
+    /**
+     * URIをFileスキームのURIに変換する.
+     * @param uri 変換前のURI  例) content://media/external/images/media/33
+     * @return 変換後のURI     例) file:///storage/sdcard/test1.jpg
+     */
+    private Uri getFileSchemeUri(Uri uri){
+        String path = getPath(uri);
+        Uri fileSchemeUri = fileSchemeUri = Uri.fromFile(new File(path));
+        Log.d("FileUri", String.valueOf(fileSchemeUri));
+        return fileSchemeUri;
+    }
+
+    private String getPath(Uri uri) {
+        String path = uri.toString();
+        if (path.matches("^file:.*")) {
+            return path.replaceFirst("file://", "");
+        } else if (!path.matches("^content:.*")) {
+            return path;
+        }
+        Context context = getContext();
+        ContentResolver contentResolver = context.getContentResolver();
+        String[] columns = { MediaStore.Images.Media.DATA };
+        Cursor cursor = contentResolver.query(uri, columns, null, null, null);
+        if (cursor != null){
+            if (cursor.getCount() > 0) {
+                cursor.moveToFirst();
+                path = cursor.getString(0);
+            }
+            cursor.close();
+        }
+        return path;
     }
 
 
